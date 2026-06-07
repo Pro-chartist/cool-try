@@ -231,9 +231,9 @@ export default function Home() {
           clearInterval(pollInterval);
           setError(response.data.error || 'Scan failed');
           setLoading(false);
-        } else if (count > 60) {
+        } else if (count > 180) {
           clearInterval(pollInterval);
-          setError('Scan timed out after 5 minutes');
+          setError('Scan timed out after 15 minutes');
           setLoading(false);
         }
       } catch (err: unknown) {
