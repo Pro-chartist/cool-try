@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getGitHubAuthHeaders, getGitHubConfig, getGitHubErrorMessage } from '../../lib/github';
 
 type TriggerScanResponse = {
   success?: boolean;
@@ -8,29 +9,6 @@ type TriggerScanResponse = {
   error?: string;
 };
 
-function getGitHubErrorMessage(error: unknown, githubRepo: string): string {
-  if (!axios.isAxiosError(error)) {
-    return error instanceof Error ? error.message : 'Failed to trigger scan';
-  }
-
-  if (error.response?.status === 404) {
-    return [
-      `GitHub repository not found or inaccessible: ${githubRepo}.`,
-      'Set NEXT_PUBLIC_GITHUB_REPO to owner/repo and make sure GITHUB_TOKEN has access to that repository.',
-    ].join(' ');
-  }
-
-  const githubMessage =
-    typeof error.response?.data === 'object' &&
-    error.response.data !== null &&
-    'message' in error.response.data
-      ? String(error.response.data.message)
-      : undefined;
-
-  return githubMessage || error.message || 'Failed to trigger scan';
-}
-
-// FIX 1: Typed handler parameters
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<TriggerScanResponse>
@@ -40,7 +18,6 @@ export default async function handler(
   }
 
   try {
-    // FIX 2: Type the request body so TypeScript doesn't infer `any`
     const { market, logic, timeframe, params } = req.body as {
       market: string;
       logic: string;
@@ -52,27 +29,15 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    const githubToken = process.env.GITHUB_TOKEN;
-    const githubRepo =
-      process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-username/screener-cloud';
+    const githubConfig = getGitHubConfig();
 
-    if (!githubToken) {
-      return res.status(500).json({ error: 'GitHub token not configured' });
+    if (githubConfig.error || !githubConfig.token || !githubConfig.repo) {
+      return res.status(500).json({ error: githubConfig.error });
     }
 
-    if (githubRepo === 'your-username/screener-cloud') {
-      return res.status(500).json({
-        error:
-          'GitHub repo not configured. Set NEXT_PUBLIC_GITHUB_REPO to your owner/repo value.',
-      });
-    }
+    const { token: githubToken, repo: githubRepo } = githubConfig;
 
-    if (!/^[^/]+\/[^/]+$/.test(githubRepo)) {
-      return res.status(500).json({
-        error:
-          'Invalid NEXT_PUBLIC_GITHUB_REPO. Use the owner/repo format, for example octocat/screener-cloud.',
-      });
-    }
+    const jobId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     await axios.post(
       `https://api.github.com/repos/${githubRepo}/dispatches`,
@@ -83,18 +48,13 @@ export default async function handler(
           logic,
           timeframe,
           params: JSON.stringify(params),
+          jobId,
         },
       },
       {
-        headers: {
-          Authorization: `token ${githubToken}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
+        headers: getGitHubAuthHeaders(githubToken),
       }
     );
-
-    // FIX 3: substr() is deprecated — use substring()
-    const jobId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     return res.status(200).json({
       success: true,
@@ -102,10 +62,7 @@ export default async function handler(
       message: 'Scan triggered successfully',
     });
   } catch (error) {
-    // FIX 4: error is `unknown` in catch — narrow before accessing .message
-    const githubRepo =
-      process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-username/screener-cloud';
-    const message = getGitHubErrorMessage(error, githubRepo);
+    const message = getGitHubErrorMessage(error, getGitHubConfig().repo);
     console.error('Error triggering scan:', message);
     return res.status(500).json({ error: message });
   }

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getGitHubAuthHeaders, getGitHubConfig, getGitHubErrorMessage } from '../../lib/github';
 
 type ScanResults = {
   total: number;
@@ -18,20 +19,31 @@ type ScanStatusResponse = {
   error?: string;
 };
 
-// ─── CSV helpers ────────────────────────────────────────────────────────────
+type GitHubWorkflowRun = {
+  status: string;
+  conclusion: string | null;
+  created_at: string;
+};
 
-/**
- * Parse a single CSV line respecting double-quoted fields.
- * e.g.  NSE:SBIN,"Tata Cons,Ltd",52  →  ['NSE:SBIN', 'Tata Cons,Ltd', '52']
- */
+type GitHubContentFile = {
+  name: string;
+  download_url: string | null;
+  type: string;
+};
+
 function parseCsvLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
 
-  for (let i = 0; i < line.length; i++) {
+  for (let i = 0; i < line.length; i += 1) {
     const char = line[i];
-    if (char === '"') {
+    const nextChar = line[i + 1];
+
+    if (char === '"' && inQuotes && nextChar === '"') {
+      current += '"';
+      i += 1;
+    } else if (char === '"') {
       inQuotes = !inQuotes;
     } else if (char === ',' && !inQuotes) {
       result.push(current.trim());
@@ -40,57 +52,49 @@ function parseCsvLine(line: string): string[] {
       current += char;
     }
   }
+
   result.push(current.trim());
   return result;
 }
 
-/**
- * Parse CSV text into scan results.
- *
- * Handles both screener output formats:
- *   Breakout  → columns include 'TV Symbol' and 'Failed Attempts'
- *   Pullback  → columns include 'TV_Symbol' (no Failed Attempts column)
- */
 function parseCsvResults(csvText: string): ScanResults {
   const lines = csvText
     .trim()
-    .split('\n')
-    .filter((l) => l.trim().length > 0);
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0);
 
   if (lines.length < 2) {
     return { total: 0, pure: 0, retry: 0, symbols: [] };
   }
 
   const headers = parseCsvLine(lines[0]);
-
-  // Detect which symbol column is present (breakout vs pullback naming)
   const symbolColIndex =
     headers.indexOf('TV Symbol') !== -1
-      ? headers.indexOf('TV Symbol')       // breakout screener
-      : headers.indexOf('TV_Symbol');       // pullback screener
+      ? headers.indexOf('TV Symbol')
+      : headers.indexOf('TV_Symbol');
+  const failedAttemptsIndex = headers.indexOf('Failed Attempts');
 
-  const failedAttemptsIndex = headers.indexOf('Failed Attempts'); // -1 for pullback
+  if (symbolColIndex === -1) {
+    return { total: 0, pure: 0, retry: 0, symbols: [] };
+  }
 
-  const dataRows = lines.slice(1).map((l) => parseCsvLine(l));
-
-  // De-duplicate symbols (same stock can appear under multiple anchor periods)
-const allSymbols = dataRows
-  .map((row) => (symbolColIndex !== -1 ? row[symbolColIndex] : ''))
-  .filter(Boolean) as string[];
-
-const uniqueSymbols = allSymbols.filter(
-  (sym, index) => allSymbols.indexOf(sym) === index
-);
+  const dataRows = lines.slice(1).map((line) => parseCsvLine(line));
+  const symbols = dataRows
+    .map((row) => row[symbolColIndex])
+    .filter((symbol): symbol is string => Boolean(symbol));
+  const uniqueSymbols = Array.from(new Set(symbols));
 
   let pure = 0;
   let retry = 0;
 
   if (failedAttemptsIndex !== -1) {
-    // Breakout: count pure (0 failed attempts) vs retry (>0)
     dataRows.forEach((row) => {
-      const attempts = parseInt(row[failedAttemptsIndex] ?? '0', 10);
-      if (isNaN(attempts) || attempts === 0) pure++;
-      else retry++;
+      const attempts = Number.parseInt(row[failedAttemptsIndex] ?? '0', 10);
+      if (Number.isNaN(attempts) || attempts === 0) {
+        pure += 1;
+      } else {
+        retry += 1;
+      }
     });
   }
 
@@ -102,26 +106,50 @@ const uniqueSymbols = allSymbols.filter(
   };
 }
 
-// ─── Date helper (sort CSVs by date in filename) ─────────────────────────────
-
 function parseDateFromFilename(name: string): Date {
-  // Filename format: nse_breakout_daily_05jun2025.csv
   const match = name.match(
     /(\d{2})(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{4})/i
   );
-  if (!match) return new Date(0);
+
+  if (!match) {
+    return new Date(0);
+  }
+
   const months: Record<string, number> = {
-    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
   };
+
   return new Date(
-    parseInt(match[3], 10),
+    Number.parseInt(match[3], 10),
     months[match[2].toLowerCase()],
-    parseInt(match[1], 10)
+    Number.parseInt(match[1], 10)
   );
 }
 
-// ─── Handler ─────────────────────────────────────────────────────────────────
+function getJobStartedAt(jobId: string): Date | undefined {
+  const timestamp = Number.parseInt(jobId.split('-')[0] ?? '', 10);
+
+  if (Number.isNaN(timestamp)) {
+    return undefined;
+  }
+
+  return new Date(timestamp - 60_000);
+}
+
+function getStringQueryParam(value: string | string[] | undefined): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -131,131 +159,121 @@ export default async function handler(
     return res.status(405).json({ status: 'failed', error: 'Method not allowed' });
   }
 
+  const jobId = getStringQueryParam(req.query.jobId);
+
+  if (!jobId) {
+    return res.status(400).json({ status: 'failed', error: 'Missing jobId' });
+  }
+
+  const marketFilter = getStringQueryParam(req.query.market)?.toLowerCase();
+  const logicFilter = getStringQueryParam(req.query.logic)?.toLowerCase();
+  const timeframeFilter = getStringQueryParam(req.query.timeframe)?.toLowerCase();
+  const githubConfig = getGitHubConfig();
+
+  if (githubConfig.error || !githubConfig.token || !githubConfig.repo) {
+    return res.status(500).json({ status: 'failed', error: githubConfig.error });
+  }
+
+  const { token: githubToken, repo: githubRepo } = githubConfig;
+  const authHeaders = getGitHubAuthHeaders(githubToken);
+
   try {
-    const { jobId, market, logic, timeframe } = req.query;
-
-    if (!jobId) {
-      return res.status(400).json({ status: 'failed', error: 'Missing jobId' });
-    }
-
-    const marketFilter = typeof market === 'string' ? market.toLowerCase() : undefined;
-    const logicFilter = typeof logic === 'string' ? logic.toLowerCase() : undefined;
-    const timeframeFilter = typeof timeframe === 'string' ? timeframe.toLowerCase() : undefined;
-
-    const githubToken = process.env.GITHUB_TOKEN;
-    const githubRepo =
-      process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-username/screener-cloud';
-
-    if (!githubToken) {
-      return res
-        .status(500)
-        .json({ status: 'failed', error: 'GitHub token not configured' });
-    }
-
-    const authHeaders = {
-      Authorization: `token ${githubToken}`,
-      Accept: 'application/vnd.github.v3+json',
-    };
-
-    // ── 1. Check latest workflow run status ──────────────────────────────────
-    const workflowResponse = await axios.get(
-      `https://api.github.com/repos/${githubRepo}/actions/workflows/screener.yml/runs?per_page=1`,
-      { headers: authHeaders }
+    const workflowResponse = await axios.get<{ workflow_runs?: GitHubWorkflowRun[] }>(
+      `https://api.github.com/repos/${githubRepo}/actions/workflows/screener.yml/runs`,
+      {
+        headers: authHeaders,
+        params: { event: 'repository_dispatch', per_page: 10 },
+      }
     );
 
-    if (
-      !workflowResponse.data.workflow_runs ||
-      workflowResponse.data.workflow_runs.length === 0
-    ) {
+    const jobStartedAt = getJobStartedAt(jobId);
+    const matchingRuns = (workflowResponse.data.workflow_runs ?? []).filter((run) => {
+      if (!jobStartedAt) {
+        return true;
+      }
+
+      return new Date(run.created_at).getTime() >= jobStartedAt.getTime();
+    });
+
+    if (matchingRuns.length === 0) {
       return res.status(200).json({
         status: 'pending',
         message: 'Waiting for workflow to start',
       });
     }
 
-    const latestRun = workflowResponse.data.workflow_runs[0];
-    const isCompleted = latestRun.status === 'completed';
-    const conclusion = latestRun.conclusion;
+    const latestRun = matchingRuns[0];
 
-    if (!isCompleted) {
+    if (latestRun.status !== 'completed') {
       return res.status(200).json({
         status: 'pending',
         message: 'Scan in progress...',
       });
     }
 
-    if (conclusion !== 'success') {
+    if (latestRun.conclusion !== 'success') {
       return res.status(200).json({
         status: 'failed',
-        error: `Workflow failed with conclusion: ${conclusion}`,
+        error: `Workflow failed with conclusion: ${latestRun.conclusion ?? 'unknown'}`,
       });
     }
 
-    // ── 2. Workflow succeeded — find the latest CSV in backend/results/ ───────
     try {
-      const contentsResponse = await axios.get(
+      const contentsResponse = await axios.get<GitHubContentFile[]>(
         `https://api.github.com/repos/${githubRepo}/contents/backend/results`,
         { headers: authHeaders }
       );
-
-      const files: Array<{ name: string; download_url: string }> =
-        contentsResponse.data;
 
       const expectedPrefix =
         marketFilter && logicFilter && timeframeFilter
           ? `${marketFilter}_${logicFilter}_${timeframeFilter}_`
           : undefined;
 
-      const latestFile = files
-        .filter((f) => f.name.endsWith('.csv'))
-        .filter((f) => !expectedPrefix || f.name.startsWith(expectedPrefix))
+      const latestFile = contentsResponse.data
+        .filter((file) => file.type === 'file' && file.download_url)
+        .filter((file) => file.name.endsWith('.csv'))
+        .filter((file) => !expectedPrefix || file.name.startsWith(expectedPrefix))
         .sort(
           (a, b) =>
             parseDateFromFilename(b.name).getTime() -
             parseDateFromFilename(a.name).getTime()
         )[0];
 
-      if (!latestFile) {
+      if (!latestFile?.download_url) {
         return res.status(200).json({
           status: 'completed',
           success: true,
-          message: 'Scan completed but no CSV found in results folder.',
+          message: 'Scan completed but no matching CSV was found in backend/results.',
           results: { total: 0, pure: 0, retry: 0, symbols: [] },
         });
       }
 
-      // ── 3. Fetch and parse the CSV ─────────────────────────────────────────
       const csvResponse = await axios.get<string>(latestFile.download_url, {
-        headers: { Authorization: `token ${githubToken}` },
         responseType: 'text',
       });
-
-      const results = parseCsvResults(csvResponse.data);
 
       return res.status(200).json({
         status: 'completed',
         success: true,
         csvFile: latestFile.name,
         downloadUrl: latestFile.download_url,
-        results,
+        results: parseCsvResults(csvResponse.data),
       });
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return res.status(200).json({
+          status: 'completed',
+          success: true,
+          message: 'Scan completed. Results folder not found.',
+          results: { total: 0, pure: 0, retry: 0, symbols: [] },
+        });
+      }
 
-    } catch {
-      // Results folder doesn't exist yet (first ever run, or empty)
-      return res.status(200).json({
-        status: 'completed',
-        success: true,
-        message: 'Scan completed. Results folder not found.',
-        results: { total: 0, pure: 0, retry: 0, symbols: [] },
-      });
+      throw error;
     }
-
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    const message = getGitHubErrorMessage(error, githubRepo);
     console.error('Error checking scan status:', message);
-    return res.status(200).json({
-      status: 'pending',
-      message: 'Checking status...',
-    });
+    return res.status(500).json({ status: 'failed', error: message });
   }
 }

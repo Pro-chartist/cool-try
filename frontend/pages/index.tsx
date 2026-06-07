@@ -236,8 +236,12 @@ export default function Home() {
           setError('Scan timed out after 5 minutes');
           setLoading(false);
         }
-      } catch {
-        if (count > 60) {
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err) && err.response?.data?.error) {
+          clearInterval(pollInterval);
+          setError(err.response.data.error);
+          setLoading(false);
+        } else if (count > 60) {
           clearInterval(pollInterval);
           setError('Scan timed out');
           setLoading(false);

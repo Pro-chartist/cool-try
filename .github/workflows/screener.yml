@@ -27,12 +27,16 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SCREENER_MARKET: ${{ github.event.client_payload.market }}
+          SCREENER_LOGIC: ${{ github.event.client_payload.logic }}
+          SCREENER_TIMEFRAME: ${{ github.event.client_payload.timeframe }}
+          SCREENER_PARAMS: ${{ github.event.client_payload.params }}
         run: |
           python backend/screener_dispatcher.py \
-            --market '${{ github.event.client_payload.market }}' \
-            --logic '${{ github.event.client_payload.logic }}' \
-            --timeframe '${{ github.event.client_payload.timeframe }}' \
-            --params '${{ github.event.client_payload.params }}'
+            --market "$SCREENER_MARKET" \
+            --logic "$SCREENER_LOGIC" \
+            --timeframe "$SCREENER_TIMEFRAME" \
+            --params "$SCREENER_PARAMS"
 
       - name: Commit results
         run: |
@@ -42,6 +46,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/results
+          git add -f backend/results
           git commit -m "Add screener results"
           git push
