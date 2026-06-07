@@ -211,11 +211,21 @@ export default function Home() {
       setPollCount(count);
 
       try {
-        const response = await axios.get(`/api/scan-status?jobId=${id}`);
+        const response = await axios.get('/api/scan-status', {
+          params: { jobId: id, market, logic, timeframe },
+        });
 
         if (response.data.status === 'completed') {
           clearInterval(pollInterval);
-          setResults(response.data.results);
+          setResults(
+            response.data.results
+              ? {
+                  ...response.data.results,
+                  csvFile: response.data.csvFile,
+                  downloadUrl: response.data.downloadUrl,
+                }
+              : null
+          );
           setLoading(false);
         } else if (response.data.status === 'failed') {
           clearInterval(pollInterval);

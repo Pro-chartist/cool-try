@@ -7,8 +7,10 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 
-from avwap_engine import find_anchor_points, calculate_avwap_low
-from output_formatter import to_tv, format_date
+from dateutil.relativedelta import relativedelta
+
+from screeners.avwap_engine import find_anchor_points, calculate_avwap_low
+from screeners.output_formatter import to_tv
 
 
 class PullbackScreener:
@@ -52,6 +54,9 @@ class PullbackScreener:
             elif self.timeframe == 'weekly':
                 start = end - timedelta(weeks=max(self.anchor_periods) + 52)
                 interval = '1wk'
+            elif self.timeframe == 'monthly':
+                start = end - relativedelta(months=max(self.anchor_periods) + 12)
+                interval = '1mo'
             else:
                 return None
 
@@ -151,7 +156,12 @@ class PullbackScreener:
                     # FIX 2: compare raw_turnover against self.min_turnover (both raw)
                     # Previously: turnover was in lakhs, min_turnover was raw → always False
                     if passes and raw_turnover >= self.min_turnover:
-                        period_label = f"{period}d" if self.timeframe == 'daily' else f"{period}w"
+                        if self.timeframe == 'daily':
+                            period_label = f"{period}d"
+                        elif self.timeframe == 'weekly':
+                            period_label = f"{period}w"
+                        else:
+                            period_label = f"{period}mo"
 
                         results.append({
                             'Symbol': symbol.replace(self.market_suffix, ''),
