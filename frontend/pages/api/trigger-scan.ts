@@ -8,6 +8,28 @@ type TriggerScanResponse = {
   error?: string;
 };
 
+function getGitHubErrorMessage(error: unknown, githubRepo: string): string {
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error ? error.message : 'Failed to trigger scan';
+  }
+
+  if (error.response?.status === 404) {
+    return [
+      `GitHub repository not found or inaccessible: ${githubRepo}.`,
+      'Set NEXT_PUBLIC_GITHUB_REPO to owner/repo and make sure GITHUB_TOKEN has access to that repository.',
+    ].join(' ');
+  }
+
+  const githubMessage =
+    typeof error.response?.data === 'object' &&
+    error.response.data !== null &&
+    'message' in error.response.data
+      ? String(error.response.data.message)
+      : undefined;
+
+  return githubMessage || error.message || 'Failed to trigger scan';
+}
+
 // FIX 1: Typed handler parameters
 export default async function handler(
   req: NextApiRequest,
@@ -36,6 +58,20 @@ export default async function handler(
 
     if (!githubToken) {
       return res.status(500).json({ error: 'GitHub token not configured' });
+    }
+
+    if (githubRepo === 'your-username/screener-cloud') {
+      return res.status(500).json({
+        error:
+          'GitHub repo not configured. Set NEXT_PUBLIC_GITHUB_REPO to your owner/repo value.',
+      });
+    }
+
+    if (!/^[^/]+\/[^/]+$/.test(githubRepo)) {
+      return res.status(500).json({
+        error:
+          'Invalid NEXT_PUBLIC_GITHUB_REPO. Use the owner/repo format, for example octocat/screener-cloud.',
+      });
     }
 
     await axios.post(
@@ -67,8 +103,9 @@ export default async function handler(
     });
   } catch (error) {
     // FIX 4: error is `unknown` in catch — narrow before accessing .message
-    const message =
-      error instanceof Error ? error.message : 'Failed to trigger scan';
+    const githubRepo =
+      process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-username/screener-cloud';
+    const message = getGitHubErrorMessage(error, githubRepo);
     console.error('Error triggering scan:', message);
     return res.status(500).json({ error: message });
   }

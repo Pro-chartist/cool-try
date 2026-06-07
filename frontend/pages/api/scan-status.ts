@@ -132,11 +132,15 @@ export default async function handler(
   }
 
   try {
-    const { jobId } = req.query;
+    const { jobId, market, logic, timeframe } = req.query;
 
     if (!jobId) {
       return res.status(400).json({ status: 'failed', error: 'Missing jobId' });
     }
+
+    const marketFilter = typeof market === 'string' ? market.toLowerCase() : undefined;
+    const logicFilter = typeof logic === 'string' ? logic.toLowerCase() : undefined;
+    const timeframeFilter = typeof timeframe === 'string' ? timeframe.toLowerCase() : undefined;
 
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo =
@@ -197,8 +201,14 @@ export default async function handler(
       const files: Array<{ name: string; download_url: string }> =
         contentsResponse.data;
 
+      const expectedPrefix =
+        marketFilter && logicFilter && timeframeFilter
+          ? `${marketFilter}_${logicFilter}_${timeframeFilter}_`
+          : undefined;
+
       const latestFile = files
         .filter((f) => f.name.endsWith('.csv'))
+        .filter((f) => !expectedPrefix || f.name.startsWith(expectedPrefix))
         .sort(
           (a, b) =>
             parseDateFromFilename(b.name).getTime() -

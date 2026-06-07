@@ -7,12 +7,17 @@ Loads stock lists, executes appropriate screener, formats output.
 import json
 import os
 import sys
+from pathlib import Path
 from datetime import datetime
 import argparse
 
-from breakout_screener import BreakoutScreener
-from pullback_screener import PullbackScreener
-from telegram_notifier import (
+BASE_DIR = Path(__file__).resolve().parent
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+from screeners.breakout_screener import BreakoutScreener
+from screeners.pullback_screener import PullbackScreener
+from screeners.telegram_notifier import (
     send_telegram_message,
     build_breakout_telegram_message,
     build_pullback_telegram_message,
@@ -26,15 +31,19 @@ def load_stock_list(market):
     Returns:
         List of stock symbols with market suffix (e.g., ['SBIN.NS', 'INFY.NS'])
     """
-    stock_file = f"stock_lists/{market.lower()}_stocks.json"
+    stock_file = BASE_DIR / 'stock_lists' / f"{market.lower()}_stocks.json"
 
     try:
-        with open(stock_file, 'r') as f:
+        with stock_file.open('r') as f:
             data = json.load(f)
 
-        suffix = data.get('suffix', '')
-        stocks = data.get('stocks', [])
-        return [f"{stock}{suffix}" for stock in stocks]
+        default_suffixes = {'NSE': '.NS', 'BSE': '.BO'}
+        suffix = data.get('suffix', default_suffixes.get(market.upper(), ''))
+        stocks = data.get('stocks') or data.get(f'{market.lower()}_stocks', [])
+        return [
+            stock if not suffix or stock.endswith(suffix) else f"{stock}{suffix}"
+            for stock in stocks
+        ]
 
     except FileNotFoundError:
         print(f"❌ Stock list file not found: {stock_file}")
@@ -54,6 +63,7 @@ def get_config(logic, timeframe, params):
     """
     config = {
         'min_turnover': params.get('min_turnover', 10_000_000),
+        'timeframe': timeframe,
     }
 
     if logic == 'breakout':
@@ -91,7 +101,7 @@ def get_anchor_periods(logic, timeframe, params):
     return []
 
 
-def save_csv(df, logic, timeframe):
+def save_csv(df, market, logic, timeframe):
     """
     Save results to CSV in results/ folder.
 
@@ -99,10 +109,11 @@ def save_csv(df, logic, timeframe):
         Path to saved file, or None on error.
     """
     date_str = datetime.now().strftime('%d%b%Y').lower()
-    filename = f"nse_{logic}_{timeframe}_{date_str}.csv"
+    filename = f"{market.lower()}_{logic}_{timeframe}_{date_str}.csv"
 
-    os.makedirs('results', exist_ok=True)
-    filepath = os.path.join('results', filename)
+    results_dir = BASE_DIR / 'results'
+    results_dir.mkdir(exist_ok=True)
+    filepath = results_dir / filename
 
     try:
         df.to_csv(filepath, index=False)
@@ -170,7 +181,7 @@ def main():
             )
 
         results_df = screener.run()
-        csv_path = save_csv(results_df, args.logic, args.timeframe)
+        csv_path = save_csv(results_df, args.market, args.logic, args.timeframe)
 
         if not results_df.empty:
             print(f"\n{'═'*60}")
