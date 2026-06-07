@@ -3,14 +3,19 @@ Pullback Screener — detects stocks pulling back to AVWAP (within proximity ban
 Fully parameterized — timeframe, tolerances, all passed at runtime.
 """
 
-import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
-
 from dateutil.relativedelta import relativedelta
 
 from screeners.avwap_engine import find_anchor_points, calculate_avwap_low
 from screeners.output_formatter import to_tv
+from screeners.data_fetcher import (
+    FETCH_ERROR,
+    FETCH_NO_DATA,
+    FETCH_OK,
+    FETCH_RATE_LIMITED,
+    fetch_history_batch,
+)
 
 
 class PullbackScreener:
@@ -45,32 +50,26 @@ class PullbackScreener:
         return suffix_map.get(market, '.NS')
 
     def _get_data(self, symbol):
-        try:
-            end = datetime.now()
+        histories, statuses = fetch_history_batch(
+            [symbol],
+            self.timeframe,
+            self.anchor_periods,
+            batch_size=1,
+        )
+        status = statuses.get(symbol)
+        if status and status.status != FETCH_OK:
+            print(f"  ⚠  {self._fetch_status_label(status)}: {status.message}")
 
-            if self.timeframe == 'daily':
-                start = end - timedelta(days=max(self.anchor_periods) + 100)
-                interval = '1d'
-            elif self.timeframe == 'weekly':
-                start = end - timedelta(weeks=max(self.anchor_periods) + 52)
-                interval = '1wk'
-            elif self.timeframe == 'monthly':
-                start = end - relativedelta(months=max(self.anchor_periods) + 12)
-                interval = '1mo'
-            else:
-                return None
+        return histories.get(symbol)
 
-            data = yf.Ticker(symbol).history(start=start, end=end, interval=interval)
-
-            if data is None or data.empty or len(data) < 10:
-                return None
-
-            if not all(c in data.columns for c in ['High', 'Low', 'Close', 'Volume']):
-                return None
-
-            return data[data['Volume'] > 0]
-        except Exception:
-            return None
+    def _fetch_status_label(self, status):
+        if status.status == FETCH_RATE_LIMITED:
+            return "Possible rate limit / fetch failed"
+        if status.status == FETCH_ERROR:
+            return "Fetch error"
+        if status.status == FETCH_NO_DATA:
+            return "No data"
+        return "No data"
 
     def _check_criteria(self, data, anchor_idx, avwap_series):
         """
@@ -199,12 +198,25 @@ class PullbackScreener:
         print(f"  Proximity: {self.proximity_low_pct}%-{self.proximity_high_pct}%")
         print(f"{'═'*60}\n")
 
+        histories, fetch_statuses = fetch_history_batch(
+            self.stocks,
+            self.timeframe,
+            self.anchor_periods,
+        )
+
         for idx, stock in enumerate(self.stocks, 1):
             print(f"  [{idx:>3}/{len(self.stocks)}]  {stock:<18}", end="", flush=True)
 
-            data = self._get_data(stock)
+            data = histories.get(stock)
             if data is None:
-                print("  ⚠  No data")
+                status = fetch_statuses.get(stock)
+                if status is None:
+                    print("  ⚠  Fetch error: missing fetch status")
+                elif status.status == FETCH_NO_DATA:
+                    print("  ⚠  No data")
+                else:
+                    message = f": {status.message}" if status.message else ""
+                    print(f"  ⚠  {self._fetch_status_label(status)}{message}")
                 continue
 
             results, hits = self._screen_stock(stock, data)
