@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
