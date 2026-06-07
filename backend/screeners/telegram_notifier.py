@@ -8,11 +8,9 @@ from datetime import datetime
 
 
 def send_telegram_message(message, bot_token, chat_id):
-    """
-    Send formatted message to Telegram.
-    """
     try:
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+
         resp = requests.post(
             url,
             json={
@@ -23,7 +21,15 @@ def send_telegram_message(message, bot_token, chat_id):
             },
             timeout=10,
         )
-        return "OK" if resp.status_code == 200 and resp.json().get('ok') else "Failed"
+
+        print(f"Telegram Status: {resp.status_code}")
+        print(f"Telegram Response: {resp.text}")
+
+        if resp.status_code == 200:
+            return "OK"
+
+        return f"Failed: {resp.text}"
+
     except Exception as e:
         return f"Error: {e}"
 
