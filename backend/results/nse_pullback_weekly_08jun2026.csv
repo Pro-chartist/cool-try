@@ -1,0 +1,3 @@
+Symbol,TV_Symbol,Timeframe,Anchor_Period,Current_Price,AVWAP,Distance_%,Turnover_Lakhs,Anchor_Date,Anchor_Low,Days_Since_Anchor,Max_Bars_Below
+SAHANA,NSE:SAHANA,WEEKLY,156w,785.55,777.57,1.03,672.6,24-07-2023,135.95,1043,4
+SAHANA,NSE:SAHANA,WEEKLY,208w,785.55,777.57,1.03,672.6,24-07-2023,135.95,1043,4
