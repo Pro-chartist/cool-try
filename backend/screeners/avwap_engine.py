@@ -97,8 +97,8 @@ def find_anchor_points(data, lookback_periods, min_periods_old):
             min_date = candidates['Low'].idxmin()
             anchor_idx = data.index.get_loc(min_date)
             days_old = (data.index[-1] - min_date).days
-
-            if days_old >= min_periods_old:
+            bars_old = len(data.loc[min_date:]) - 1
+            if bars_old >= min_periods_old:
                 anchors[str(period)] = {
                     'idx': anchor_idx,
                     'date': min_date,
