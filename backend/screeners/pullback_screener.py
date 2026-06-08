@@ -113,8 +113,9 @@ class PullbackScreener:
                 streaks.append(cur)
 
             max_consec = max(streaks) if streaks else 0
-            if max_consec > self.max_brief_crosses:
-                return False, f"Dipped {max_consec} bars below AVWAP", 0, max_consec
+            num_crosses = len(streaks)
+            if num_crosses > self.max_brief_crosses:
+                return False, f"Crossed below AVWAP {num_crosses} times", 0, max_consec
 
             # FIX 1: avwap_series.iloc[-1] is now a scalar float
             cmp = data['Close'].iloc[-1]
@@ -190,7 +191,7 @@ class PullbackScreener:
         all_results = []
 
         print(f"\n{'═'*60}")
-        print(f"  NSE {self.timeframe.upper()} AVWAP PULLBACK SCREENER")
+        print(f"  {self.market} {self.timeframe.upper()} PULLBACK SCREENER")
         print(f"  {datetime.now().strftime('%d %b %Y  %H:%M')}")
         print(f"{'═'*60}")
         print(f"  Stocks: {len(self.stocks)}")
