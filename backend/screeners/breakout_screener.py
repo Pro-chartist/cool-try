@@ -238,7 +238,7 @@ class BreakoutScreener:
         all_results = []
 
         print(f"\n{'═'*60}")
-        print(f"  NSE {self.timeframe.upper()} AVWAP BREAKOUT SCANNER")
+        print(f"  {self.market} {self.timeframe.upper()} AVWAP BREAKOUT SCANNER")
         print(f"  {datetime.now().strftime('%d %b %Y  %H:%M')}")
         print(f"{'═'*60}")
         print(f"  Stocks: {len(self.stocks)}")
