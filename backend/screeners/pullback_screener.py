@@ -94,15 +94,15 @@ class PullbackScreener:
             if post_data.empty:
                 return False, "No post-anchor data", 0, 0
 
-            lows = post_data['Low']
+            closes = post_data['Close']
             # reindex a Series → returns a Series; .iloc[i] is a scalar float
-            avwap = post_avwap.reindex(lows.index, method='ffill')
+            avwap = post_avwap.reindex(Closes.index, method='ffill')
 
-            # Check for consecutive bars below AVWAP
+            # Check for consecutive closes below AVWAP
             streaks, cur = [], 0
-            for i in range(len(lows)):
+            for i in range(len(closes)):
                 # FIX 1: avwap.iloc[i] is now a scalar — comparison is bool, not Series
-                below = (i < len(avwap)) and (lows.iloc[i] < avwap.iloc[i])
+                below = (i < len(avwap)) and (closes.iloc[i] < avwap.iloc[i])
                 if below:
                     cur += 1
                 else:
