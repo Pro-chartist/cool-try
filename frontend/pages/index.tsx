@@ -11,14 +11,14 @@ interface ScanResults {
 }
 
 const styles: Record<string, CSSProperties> = {
-  container: {
-    maxWidth: '900px',
-    margin: '0 auto',
-    padding: '20px',
-    fontFamily: 'Inter, Arial, sans-serif',
-    background: 'radial-gradient(circle at top, rgba(0,255,136,0.08), transparent 40%), #050505',
-    minHeight: '100vh',
-  },
+container: {
+  width: '100%',
+  minHeight: '100vh',
+  padding: '20px',
+  fontFamily: 'Inter, Arial, sans-serif',
+  background: 'radial-gradient(circle at top, rgba(0,255,136,0.08), transparent 40%), #050505',
+  color: '#E8FFF2',
+},
   header: {
     textAlign: 'center',
     marginBottom: '30px',
@@ -103,7 +103,7 @@ const styles: Record<string, CSSProperties> = {
     marginTop: '10px',
     marginBottom: '10px',
     border: '1px solid #ddd',
-    borderRadius: '3px',
+    borderRadius: '4px',
     fontFamily: 'monospace',
     fontSize: '12px',
     boxSizing: 'border-box',
