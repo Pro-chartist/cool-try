@@ -298,6 +298,7 @@ export default function Home() {
               <option value="pullback">Pullback</option>
             </select>
           </div>
+          </div>
 <div style={styles.formGroup}>
   <label>Timeframe:</label>
   <select
