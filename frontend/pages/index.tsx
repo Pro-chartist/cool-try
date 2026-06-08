@@ -15,8 +15,8 @@ const styles: Record<string, CSSProperties> = {
     maxWidth: '900px',
     margin: '0 auto',
     padding: '20px',
-    fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#f5f5f5',
+    fontFamily: 'Inter, Arial, sans-serif',
+    background: 'radial-gradient(circle at top, rgba(0,255,136,0.08), transparent 40%), #050505',
     minHeight: '100vh',
   },
   header: {
@@ -26,10 +26,11 @@ const styles: Record<string, CSSProperties> = {
     paddingBottom: '20px',
   },
   form: {
-    backgroundColor: 'white',
+    backgroundColor: '#111714',
     padding: '20px',
     borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    boxShadow: '0 0 25px rgba(0,255,136,0.08)',
+    border: '1px solid rgba(0,255,136,0.15)',
     marginBottom: '20px',
   },
   formSection: {
@@ -44,7 +45,9 @@ const styles: Record<string, CSSProperties> = {
     width: '100%',
     padding: '8px',
     marginTop: '5px',
-    border: '1px solid #ddd',
+    backgroundColor: '#0B0F0C',
+    color: '#E8FFF2',
+    border: '1px solid rgba(0,255,136,0.25)',
     borderRadius: '4px',
     fontSize: '14px',
   },
@@ -52,7 +55,9 @@ const styles: Record<string, CSSProperties> = {
     width: '100%',
     padding: '8px',
     marginTop: '5px',
-    border: '1px solid #ddd',
+    backgroundColor: '#0B0F0C',
+    color: '#E8FFF2',
+    border: '1px solid rgba(0,255,136,0.25)',
     borderRadius: '4px',
     fontSize: '14px',
     boxSizing: 'border-box',
@@ -60,14 +65,15 @@ const styles: Record<string, CSSProperties> = {
   button: {
     width: '100%',
     padding: '12px',
-    backgroundColor: '#007bff',
-    color: 'white',
+    background: 'linear-gradient(135deg,#00FF88,#00CC6A)',
+    color: '#000',
     border: 'none',
     borderRadius: '4px',
     fontSize: '16px',
     fontWeight: 'bold',
     cursor: 'pointer',
     marginTop: '10px',
+    boxShadow: '0 0 20px rgba(0,255,136,0.35)',
   },
   error: {
     backgroundColor: '#f8d7da',
@@ -273,8 +279,8 @@ export default function Home() {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1>NSE Screener Cloud</h1>
-        <p>Select parameters and run your screener</p>
+        <h1>ARGUS</h1>
+        <p>Institutional Trade Finder</p>
       </header>
 
       <form onSubmit={handleRunScan} style={styles.form}>
@@ -391,7 +397,7 @@ export default function Home() {
           disabled={loading}
           style={{ ...styles.button, opacity: loading ? 0.6 : 1 }}
         >
-          {loading ? `Running scan... (${pollCount * 5}s elapsed)` : 'Run Scan'}
+          {loading ? `Running scan... (${pollCount * 5}s passed)` : 'Deploy Argus'}
         </button>
       </form>
 
