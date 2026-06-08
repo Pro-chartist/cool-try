@@ -123,13 +123,17 @@ const styles: Record<string, CSSProperties> = {
     marginTop: '15px',
   },
 };
-
+const DEFAULT_ANCHORS: Record<string, string> = {
+  daily: '180,365,550,730,900',
+  weekly: '52,104,156,208,260',
+  monthly: '12,36,60,84,120',
+};
 export default function Home() {
   // Form state
   const [market, setMarket] = useState('NSE');
   const [logic, setLogic] = useState('breakout');
   const [timeframe, setTimeframe] = useState('daily');
-  const [anchorPeriods, setAnchorPeriods] = useState('52,156,260');
+  const [anchorPeriods, setAnchorPeriods] = useState(DEFAULT_ANCHORS['daily']);
   const [toleranceBelowAvwap, setToleranceBelowAvwap] = useState('0.05');
   const [ceiling, setCeiling] = useState('0.10');
   const [sustainPeriods, setSustainPeriods] = useState('3');
@@ -294,17 +298,22 @@ export default function Home() {
               <option value="pullback">Pullback</option>
             </select>
           </div>
-
-          <div style={styles.formGroup}>
-            <label>Timeframe:</label>
-            <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)} style={styles.select}>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-        </div>
-
+<div style={styles.formGroup}>
+  <label>Timeframe:</label>
+  <select
+    value={timeframe}
+    onChange={(e) => {
+      const tf = e.target.value;
+      setTimeframe(tf);
+      setAnchorPeriods(DEFAULT_ANCHORS[tf] || '');
+    }}
+    style={styles.select}
+  >
+    <option value="daily">Daily</option>
+    <option value="weekly">Weekly</option>
+    <option value="monthly">Monthly</option>
+  </select>
+</div>
         <div style={styles.formSection}>
           <h2>Anchor Periods</h2>
           <div style={styles.formGroup}>
