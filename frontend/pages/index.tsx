@@ -103,7 +103,7 @@ const styles: Record<string, CSSProperties> = {
     marginTop: '10px',
     marginBottom: '10px',
     border: '1px solid #ddd',
-    borderRadius: '4px',
+    borderRadius: '3px',
     fontFamily: 'monospace',
     fontSize: '12px',
     boxSizing: 'border-box',
