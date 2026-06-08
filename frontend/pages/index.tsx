@@ -594,11 +594,11 @@ export default function Home() {
   const [logic, setLogic]                       = useState('breakout');
   const [timeframe, setTimeframe]               = useState('daily');
   const [anchorPeriods, setAnchorPeriods]       = useState(DEFAULT_ANCHORS['daily']);
-  const [toleranceBelowAvwap, setToleranceBelowAvwap] = useState('0.05');
-  const [ceiling, setCeiling]                   = useState('0.10');
+  const [toleranceBelowAvwap, setToleranceBelowAvwap] = useState('0.03');
+  const [ceiling, setCeiling]                   = useState('0.07');
   const [sustainPeriods, setSustainPeriods]     = useState('3');
-  const [maxFailedAttempts, setMaxFailedAttempts] = useState('2');
-  const [minTurnover, setMinTurnover]           = useState('10000000');
+  const [maxFailedAttempts, setMaxFailedAttempts] = useState('0');
+  const [minTurnover, setMinTurnover]           = useState('5000000');
   const [proximityLowPct, setProximityLowPct]   = useState('0.0');
   const [proximityHighPct, setProximityHighPct] = useState('2.0');
   const [maxBriefCrosses, setMaxBriefCrosses]   = useState('5');
