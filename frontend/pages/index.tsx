@@ -10,7 +10,7 @@ interface ScanResults {
   downloadUrl?: string;
 }
 
-// ─── Design tokens (mirrors CSS vars for inline styles) ──────────────────────
+// ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
   bgVoid:       '#060A0D',
   bgBase:       '#0B1014',
@@ -44,39 +44,41 @@ const DEFAULT_ANCHORS: Record<string, string> = {
 };
 
 const styles: Record<string, CSSProperties> = {
-  // ── Layout ─────────────────────────────────────────────────────────────────
+
+  // ── Root: full viewport, no outer scroll ───────────────────────────────────
   page: {
-    minHeight: '100vh',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
     backgroundColor: C.bgVoid,
     color: C.textPrimary,
     fontFamily: C.fontMono,
-    padding: '0 0 60px',
   },
 
   // ── Top bar ────────────────────────────────────────────────────────────────
   topbar: {
     borderBottom: `1px solid ${C.borderDim}`,
     backgroundColor: C.bgBase,
-    padding: '0 40px',
+    padding: '0 28px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: '58px',
-    position: 'sticky' as const,
-    top: 0,
+    height: '48px',
+    flexShrink: 0,
     zIndex: 100,
     backdropFilter: 'blur(12px)',
   },
   topbarLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '14px',
+    gap: '12px',
   },
   logoMark: {
-    width: '28px',
-    height: '28px',
+    width: '24px',
+    height: '24px',
     border: `1.5px solid ${C.green}`,
-    borderRadius: '5px',
+    borderRadius: '4px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -86,13 +88,13 @@ const styles: Record<string, CSSProperties> = {
   logoText: {
     fontFamily: C.fontDisplay,
     fontWeight: 800,
-    fontSize: '18px',
+    fontSize: '15px',
     letterSpacing: '-0.04em',
     color: C.textPrimary,
   },
   logoSub: {
     fontFamily: C.fontMono,
-    fontSize: '10px',
+    fontSize: '9px',
     letterSpacing: '0.18em',
     color: C.textMuted,
     textTransform: 'uppercase' as const,
@@ -116,18 +118,155 @@ const styles: Record<string, CSSProperties> = {
     flexShrink: 0,
   },
 
-  // ── Main layout ────────────────────────────────────────────────────────────
-  main: {
-    maxWidth: '1180px',
-    margin: '0 auto',
-    padding: '36px 40px',
-    display: 'grid',
-    gridTemplateColumns: '340px 1fr',
-    gap: '24px',
-    alignItems: 'start',
+  // ── Params bar: fixed, never scrolls ──────────────────────────────────────
+  paramsBar: {
+    flexShrink: 0,
+    backgroundColor: C.bgBase,
+    borderBottom: `1px solid ${C.borderDim}`,
+    padding: '0 28px',
   },
 
-  // ── Panel (shared card style) ──────────────────────────────────────────────
+  // Row 1: market / logic / timeframe / anchor / turnover / run
+  paramsRow1: {
+    display: 'flex',
+    alignItems: 'center',
+    height: '62px',
+    width: '100%',
+  },
+
+  // Row 2: logic-specific params
+  paramsRow2: {
+    display: 'flex',
+    alignItems: 'center',
+    height: '46px',
+    borderTop: `1px solid ${C.borderDim}`,
+    gap: '0',
+  },
+
+  paramGroup: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    justifyContent: 'center',
+    gap: '4px',
+    padding: '0 18px',
+    flexShrink: 0,
+  },
+
+  paramDivider: {
+    width: '1px',
+    alignSelf: 'stretch',
+    margin: '10px 0',
+    backgroundColor: C.borderDim,
+    flexShrink: 0,
+  },
+
+  paramLabel: {
+    fontSize: '9px',
+    fontWeight: 700,
+    letterSpacing: '0.14em',
+    color: C.textMuted,
+    textTransform: 'uppercase' as const,
+    fontFamily: C.fontMono,
+    whiteSpace: 'nowrap' as const,
+  },
+
+  // ── Inline segment control ─────────────────────────────────────────────────
+  segInline: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2px',
+    backgroundColor: C.bgRaised,
+    border: `1px solid ${C.borderDim}`,
+    borderRadius: '5px',
+    padding: '2px',
+  },
+
+  segBtn: {
+    padding: '4px 10px',
+    border: 'none',
+    borderRadius: '3px',
+    backgroundColor: 'transparent',
+    color: C.textSecondary,
+    fontSize: '11px',
+    fontFamily: C.fontMono,
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+    whiteSpace: 'nowrap' as const,
+  },
+  segBtnActive: {
+    backgroundColor: C.bgElevated,
+    color: C.green,
+    boxShadow: `inset 0 0 0 1px ${C.borderAccent}`,
+  },
+  segBtnDisabled: {
+    opacity: 0.28,
+    cursor: 'not-allowed',
+  },
+
+  // ── Inline inputs ──────────────────────────────────────────────────────────
+  inputInline: {
+    padding: '4px 10px',
+    backgroundColor: C.bgRaised,
+    border: `1px solid ${C.borderStd}`,
+    borderRadius: '5px',
+    color: C.textPrimary,
+    fontSize: '12px',
+    fontFamily: C.fontMono,
+    outline: 'none',
+    width: '170px',
+    transition: 'border-color 150ms ease, box-shadow 150ms ease',
+    boxSizing: 'border-box' as const,
+    height: '26px',
+  },
+  inputInlineNarrow: {
+    width: '108px',
+  },
+
+  // ── Run button inside params bar ───────────────────────────────────────────
+  runButtonBar: {
+    padding: '7px 22px',
+    backgroundColor: C.green,
+    color: C.bgVoid,
+    border: 'none',
+    borderRadius: '5px',
+    fontSize: '11px',
+    fontFamily: C.fontMono,
+    fontWeight: 700,
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase' as const,
+    cursor: 'pointer',
+    boxShadow: `0 0 18px ${C.greenGlow}`,
+    transition: 'all 150ms ease',
+    whiteSpace: 'nowrap' as const,
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '7px',
+    height: '30px',
+  },
+  runButtonBarLoading: {
+    backgroundColor: C.bgElevated,
+    color: C.green,
+    boxShadow: `inset 0 0 0 1px ${C.borderAccent}`,
+    cursor: 'default',
+  },
+
+  // ── Results pane: scrollable, takes remaining height ──────────────────────
+  resultsPane: {
+    flex: 1,
+    overflowY: 'auto' as const,
+    padding: '24px 28px',
+  },
+  resultsPaneInner: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '16px',
+    maxWidth: '1100px',
+  },
+
+  // ── Panel (card style used in results) ────────────────────────────────────
   panel: {
     backgroundColor: C.bgSurface,
     border: `1px solid ${C.borderDim}`,
@@ -135,7 +274,7 @@ const styles: Record<string, CSSProperties> = {
     overflow: 'hidden',
   },
   panelHeader: {
-    padding: '14px 20px',
+    padding: '12px 20px',
     borderBottom: `1px solid ${C.borderDim}`,
     display: 'flex',
     alignItems: 'center',
@@ -153,193 +292,52 @@ const styles: Record<string, CSSProperties> = {
   panelTitle: {
     fontFamily: C.fontDisplay,
     fontWeight: 700,
-    fontSize: '13px',
+    fontSize: '12px',
     letterSpacing: '0.04em',
     color: C.textPrimary,
     textTransform: 'uppercase' as const,
   },
-  panelBody: {
-    padding: '20px',
-  },
 
-  // ── Section divider ────────────────────────────────────────────────────────
-  section: {
-    marginBottom: '22px',
-    paddingBottom: '22px',
-    borderBottom: `1px solid ${C.borderDim}`,
-  },
-  sectionLast: {
-    marginBottom: '0',
-    paddingBottom: '0',
-    borderBottom: 'none',
-  },
-  sectionLabel: {
-    fontFamily: C.fontMono,
-    fontSize: '10px',
-    fontWeight: 700,
-    letterSpacing: '0.14em',
-    color: C.textMuted,
-    textTransform: 'uppercase' as const,
-    marginBottom: '14px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  sectionLabelLine: {
-    flex: 1,
-    height: '1px',
-    backgroundColor: C.borderDim,
-  },
-
-  // ── Segmented control (Market / Logic / Timeframe) ─────────────────────────
-  segmentGroup: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '2px',
-    backgroundColor: C.bgRaised,
-    border: `1px solid ${C.borderDim}`,
-    borderRadius: '6px',
-    padding: '3px',
-    marginBottom: '12px',
-  },
-  segmentGroupFour: {
-    gridTemplateColumns: 'repeat(4, 1fr)',
-  },
-  segmentGroupThree: {
-    gridTemplateColumns: 'repeat(3, 1fr)',
-  },
-  segmentButton: {
-    padding: '7px 4px',
-    border: 'none',
-    borderRadius: '4px',
-    backgroundColor: 'transparent',
-    color: C.textSecondary,
-    fontSize: '11px',
-    fontFamily: C.fontMono,
-    fontWeight: 700,
-    letterSpacing: '0.06em',
-    cursor: 'pointer',
-    transition: 'all 150ms ease',
-    textAlign: 'center' as const,
-  },
-  segmentButtonActive: {
-    backgroundColor: C.bgElevated,
-    color: C.green,
-    boxShadow: `inset 0 0 0 1px ${C.borderAccent}`,
-  },
-
-  // ── Form fields ────────────────────────────────────────────────────────────
-  formGroup: {
-    marginBottom: '12px',
-  },
-  formGroupLast: {
-    marginBottom: '0',
-  },
-  fieldLabel: {
-    fontSize: '10px',
-    fontWeight: 700,
-    letterSpacing: '0.1em',
-    color: C.textLabel,
-    textTransform: 'uppercase' as const,
-    marginBottom: '5px',
-    display: 'block',
-  },
-  input: {
-    width: '100%',
-    padding: '9px 12px',
-    backgroundColor: C.bgRaised,
-    border: `1px solid ${C.borderStd}`,
-    borderRadius: '5px',
-    color: C.textPrimary,
-    fontSize: '13px',
-    fontFamily: C.fontMono,
-    outline: 'none',
-    transition: 'border-color 150ms ease, box-shadow 150ms ease',
-    boxSizing: 'border-box' as const,
-  },
-
-  // ── Row of 2 fields ────────────────────────────────────────────────────────
-  fieldRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '10px',
-    marginBottom: '12px',
-  },
-
-  // ── Primary CTA ────────────────────────────────────────────────────────────
-  runButton: {
-    width: '100%',
-    padding: '13px',
-    backgroundColor: C.green,
-    color: C.bgVoid,
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '13px',
-    fontFamily: C.fontMono,
-    fontWeight: 700,
-    letterSpacing: '0.12em',
-    textTransform: 'uppercase' as const,
-    cursor: 'pointer',
-    marginTop: '4px',
-    boxShadow: `0 0 20px ${C.greenGlow}`,
-    transition: 'all 150ms ease',
-    position: 'relative' as const,
-    overflow: 'hidden',
-  },
-  runButtonLoading: {
-    backgroundColor: C.bgElevated,
-    color: C.green,
-    boxShadow: `inset 0 0 0 1px ${C.borderAccent}`,
-  },
-
-  // ── Right column ───────────────────────────────────────────────────────────
-  rightCol: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '20px',
-  },
-
-  // ── Idle state ─────────────────────────────────────────────────────────────
+  // ── Idle ──────────────────────────────────────────────────────────────────
   idleCard: {
     backgroundColor: C.bgSurface,
     border: `1px solid ${C.borderDim}`,
     borderRadius: '8px',
-    padding: '52px 36px',
+    padding: '60px 36px',
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
     justifyContent: 'center',
     gap: '14px',
     textAlign: 'center' as const,
-    minHeight: '220px',
   },
   idleIcon: {
-    width: '44px',
-    height: '44px',
+    width: '42px',
+    height: '42px',
     border: `1px solid ${C.borderStd}`,
     borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: C.textMuted,
-    fontSize: '20px',
+    fontSize: '18px',
     marginBottom: '4px',
   },
   idleTitle: {
     fontFamily: C.fontDisplay,
     fontWeight: 700,
-    fontSize: '15px',
+    fontSize: '14px',
     color: C.textSecondary,
   },
   idleSub: {
     fontSize: '11px',
     color: C.textMuted,
     letterSpacing: '0.04em',
-    maxWidth: '240px',
+    maxWidth: '300px',
     lineHeight: '1.7',
   },
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  // ── Loading ───────────────────────────────────────────────────────────────
   loadingCard: {
     backgroundColor: C.bgSurface,
     border: `1px solid ${C.borderAccent}`,
@@ -416,12 +414,11 @@ const styles: Record<string, CSSProperties> = {
     fontFamily: C.fontMono,
   },
 
-  // ── Results ────────────────────────────────────────────────────────────────
+  // ── Results stats ──────────────────────────────────────────────────────────
   statsRow: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '10px',
-    marginBottom: '0',
   },
   statCard: {
     backgroundColor: C.bgRaised,
@@ -452,12 +449,12 @@ const styles: Record<string, CSSProperties> = {
     color: C.textPrimary,
   },
 
-  // ── Symbols panel ─────────────────────────────────────────────────────────
+  // ── Symbols panel ──────────────────────────────────────────────────────────
   symbolsHeader: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '14px 20px',
+    padding: '12px 20px',
     borderBottom: `1px solid ${C.borderDim}`,
     backgroundColor: C.bgRaised,
   },
@@ -495,10 +492,9 @@ const styles: Record<string, CSSProperties> = {
   symbolsActions: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '0',
   },
   actionButton: {
-    padding: '12px 16px',
+    padding: '11px 16px',
     backgroundColor: 'transparent',
     border: 'none',
     color: C.textSecondary,
@@ -518,8 +514,6 @@ const styles: Record<string, CSSProperties> = {
   actionButtonLeft: {
     borderRight: `1px solid ${C.borderDim}`,
   },
-
-  // ── No results ─────────────────────────────────────────────────────────────
   noResults: {
     padding: '32px 20px',
     textAlign: 'center' as const,
@@ -529,29 +523,31 @@ const styles: Record<string, CSSProperties> = {
   },
 };
 
-// ─── Small sub-components ─────────────────────────────────────────────────────
-
-function SegButton({
-  label, value, current, onClick, cols
+// ─── Inline segment button ────────────────────────────────────────────────────
+function SegBtn({
+  label, value, current, onClick, disabled = false,
 }: {
   label: string; value: string; current: string;
-  onClick: (v: string) => void; cols?: number;
+  onClick: (v: string) => void; disabled?: boolean;
 }) {
   const isActive = value === current;
   return (
     <button
       type="button"
-      onClick={() => onClick(value)}
+      disabled={disabled}
+      onClick={() => !disabled && onClick(value)}
       style={{
-        ...styles.segmentButton,
-        ...(isActive ? styles.segmentButtonActive : {}),
-        gridColumn: cols ? `span ${cols}` : undefined,
+        ...styles.segBtn,
+        ...(isActive ? styles.segBtnActive : {}),
+        ...(disabled ? styles.segBtnDisabled : {}),
       }}
       onMouseEnter={e => {
-        if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = C.textPrimary;
+        if (!isActive && !disabled)
+          (e.currentTarget as HTMLButtonElement).style.color = C.textPrimary;
       }}
       onMouseLeave={e => {
-        if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = C.textSecondary;
+        if (!isActive && !disabled)
+          (e.currentTarget as HTMLButtonElement).style.color = C.textSecondary;
       }}
     >
       {label}
@@ -559,16 +555,17 @@ function SegButton({
   );
 }
 
-function FieldInput({
-  label, value, onChange, type = 'text', step, placeholder, last
+// ─── Inline input with focus glow ─────────────────────────────────────────────
+function ParamInput({
+  label, value, onChange, type = 'text', step, placeholder, narrow,
 }: {
   label: string; value: string; onChange: (v: string) => void;
-  type?: string; step?: string; placeholder?: string; last?: boolean;
+  type?: string; step?: string; placeholder?: string; narrow?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   return (
-    <div style={last ? styles.formGroupLast : styles.formGroup}>
-      <span style={styles.fieldLabel}>{label}</span>
+    <div style={styles.paramGroup}>
+      <span style={styles.paramLabel}>{label}</span>
       <input
         type={type}
         step={step}
@@ -578,7 +575,8 @@ function FieldInput({
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={{
-          ...styles.input,
+          ...styles.inputInline,
+          ...(narrow ? styles.inputInlineNarrow : {}),
           borderColor: focused ? C.borderAccent : C.borderStd,
           boxShadow: focused ? `0 0 0 3px ${C.greenGlowLg}` : 'none',
         }}
@@ -589,28 +587,28 @@ function FieldInput({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Home() {
-  // Form state
-  const [market, setMarket]                     = useState('NSE');
-  const [logic, setLogic]                       = useState('breakout');
-  const [timeframe, setTimeframe]               = useState('daily');
-  const [anchorPeriods, setAnchorPeriods]       = useState(DEFAULT_ANCHORS['daily']);
+  // ── Form state (unchanged) ─────────────────────────────────────────────────
+  const [market, setMarket]                           = useState('NSE');
+  const [logic, setLogic]                             = useState('breakout');
+  const [timeframe, setTimeframe]                     = useState('daily');
+  const [anchorPeriods, setAnchorPeriods]             = useState(DEFAULT_ANCHORS['daily']);
   const [toleranceBelowAvwap, setToleranceBelowAvwap] = useState('0.03');
-  const [ceiling, setCeiling]                   = useState('0.07');
-  const [sustainPeriods, setSustainPeriods]     = useState('3');
-  const [maxFailedAttempts, setMaxFailedAttempts] = useState('0');
-  const [minTurnover, setMinTurnover]           = useState('5000000');
-  const [proximityLowPct, setProximityLowPct]   = useState('0.0');
-  const [proximityHighPct, setProximityHighPct] = useState('2.0');
-  const [maxBriefCrosses, setMaxBriefCrosses]   = useState('5');
-  const [minPeriodsOld, setMinPeriodsOld]       = useState('20');
+  const [ceiling, setCeiling]                         = useState('0.07');
+  const [sustainPeriods, setSustainPeriods]           = useState('3');
+  const [maxFailedAttempts, setMaxFailedAttempts]     = useState('0');
+  const [minTurnover, setMinTurnover]                 = useState('5000000');
+  const [proximityLowPct, setProximityLowPct]         = useState('0.0');
+  const [proximityHighPct, setProximityHighPct]       = useState('2.0');
+  const [maxBriefCrosses, setMaxBriefCrosses]         = useState('5');
+  const [minPeriodsOld, setMinPeriodsOld]             = useState('20');
 
-  // UI state
-  const [loading, setLoading]   = useState(false);
-  const [results, setResults]   = useState<ScanResults | null>(null);
-  const [error, setError]       = useState<string | null>(null);
+  // ── UI state (unchanged) ───────────────────────────────────────────────────
+  const [loading, setLoading]     = useState(false);
+  const [results, setResults]     = useState<ScanResults | null>(null);
+  const [error, setError]         = useState<string | null>(null);
   const [pollCount, setPollCount] = useState(0);
-  const [copied, setCopied]     = useState(false);
-  const [elapsed, setElapsed]   = useState(0);
+  const [copied, setCopied]       = useState(false);
+  const [elapsed, setElapsed]     = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -626,11 +624,10 @@ export default function Home() {
   const formatElapsed = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
-    return m > 0
-      ? `${m}:${sec.toString().padStart(2, '0')}`
-      : `${sec}s`;
+    return m > 0 ? `${m}:${sec.toString().padStart(2, '0')}` : `${sec}s`;
   };
 
+  // ── Scan logic (unchanged) ─────────────────────────────────────────────────
   const handleRunScan = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -731,18 +728,19 @@ export default function Home() {
     }
   };
 
-  // Disable timeframes that aren't valid for market+logic combos
   const availableTimeframes = market === 'NASDAQ' || market === 'NYSE'
     ? ['weekly']
     : ['daily', 'weekly', 'monthly'];
 
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={styles.page}>
-      {/* ── Top bar ───────────────────────────────────────────────────────── */}
+
+      {/* ── Top bar ─────────────────────────────────────────────────────────── */}
       <header style={styles.topbar}>
         <div style={styles.topbarLeft}>
           <div style={styles.logoMark}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
               <path d="M2 7 L7 2 L12 7 L7 12 Z" stroke="#00FF88" strokeWidth="1.5" fill="none"/>
               <path d="M7 4.5 L9.5 7 L7 9.5 L4.5 7 Z" fill="#00FF88"/>
             </svg>
@@ -755,169 +753,160 @@ export default function Home() {
         <div style={styles.topbarRight}>
           <div style={styles.statusDot} />
           <span>System Online</span>
-          <span style={{ color: C.borderStd, margin: '0 4px' }}>·</span>
+          <span style={{ color: C.borderStd, margin: '0 6px' }}>·</span>
           <span style={{ color: C.textMuted }}>
             {market} / {logic} / {timeframe}
           </span>
         </div>
       </header>
 
-      {/* ── Main grid ─────────────────────────────────────────────────────── */}
-      <main style={styles.main}>
-        {/* ── LEFT: Config panel ────────────────────────────────────────── */}
+      {/* ── Params bar: fixed, no scroll ────────────────────────────────────── */}
+      <div style={styles.paramsBar}>
         <form onSubmit={handleRunScan}>
-          <div style={styles.panel}>
-            <div style={styles.panelHeader}>
-              <div style={styles.panelHeaderDot} />
-              <span style={styles.panelTitle}>Scan Configuration</span>
+
+          {/* Row 1: core selectors + shared params + run button */}
+          <div style={styles.paramsRow1}>
+
+            {/* Market */}
+            <div style={{ ...styles.paramGroup, paddingLeft: 0 }}>
+              <span style={styles.paramLabel}>Market</span>
+              <div style={styles.segInline}>
+                {['NSE', 'BSE', 'NASDAQ', 'NYSE'].map(m => (
+                  <SegBtn key={m} label={m} value={m} current={market} onClick={v => {
+                    setMarket(v);
+                    // reset timeframe if switching to US markets
+                    if ((v === 'NASDAQ' || v === 'NYSE') && timeframe !== 'weekly') {
+                      setTimeframe('weekly');
+                      setAnchorPeriods(DEFAULT_ANCHORS['weekly']);
+                    }
+                  }} />
+                ))}
+              </div>
             </div>
 
-            <div style={styles.panelBody}>
-              {/* Market */}
-              <div style={styles.section}>
-                <div style={styles.sectionLabel}>
-                  <span>Market</span>
-                  <div style={styles.sectionLabelLine} />
-                </div>
-                <div style={{ ...styles.segmentGroup, ...styles.segmentGroupFour }}>
-                  {['NSE', 'BSE', 'NASDAQ', 'NYSE'].map(m => (
-                    <SegButton key={m} label={m} value={m} current={market} onClick={setMarket} />
-                  ))}
-                </div>
+            <div style={styles.paramDivider} />
 
-                {/* Logic */}
-                <div style={{ ...styles.sectionLabel, marginTop: '14px' }}>
-                  <span>Logic</span>
-                  <div style={styles.sectionLabelLine} />
-                </div>
-                <div style={styles.segmentGroup}>
-                  <SegButton label="Breakout" value="breakout" current={logic} onClick={setLogic} />
-                  <SegButton label="Pullback" value="pullback" current={logic} onClick={setLogic} />
-                </div>
-
-                {/* Timeframe */}
-                <div style={{ ...styles.sectionLabel, marginTop: '14px' }}>
-                  <span>Timeframe</span>
-                  <div style={styles.sectionLabelLine} />
-                </div>
-                <div style={{ ...styles.segmentGroup, ...styles.segmentGroupThree }}>
-                  {['daily', 'weekly', 'monthly'].map(tf => {
-                    const disabled = !availableTimeframes.includes(tf);
-                    return (
-                      <button
-                        key={tf}
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => {
-                          setTimeframe(tf);
-                          if (DEFAULT_ANCHORS[tf]) setAnchorPeriods(DEFAULT_ANCHORS[tf]);
-                        }}
-                        style={{
-                          ...styles.segmentButton,
-                          ...(tf === timeframe ? styles.segmentButtonActive : {}),
-                          opacity: disabled ? 0.3 : 1,
-                          cursor: disabled ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        {tf.charAt(0).toUpperCase() + tf.slice(1)}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Logic */}
+            <div style={styles.paramGroup}>
+              <span style={styles.paramLabel}>Logic</span>
+              <div style={styles.segInline}>
+                <SegBtn label="Breakout" value="breakout" current={logic} onClick={setLogic} />
+                <SegBtn label="Pullback" value="pullback" current={logic} onClick={setLogic} />
               </div>
+            </div>
 
-              {/* Anchor Periods + Min Turnover */}
-              <div style={styles.section}>
-                <div style={styles.sectionLabel}>
-                  <span>Parameters</span>
-                  <div style={styles.sectionLabelLine} />
-                </div>
-                <FieldInput
-                  label="Anchor Periods (comma-separated)"
-                  value={anchorPeriods}
-                  onChange={setAnchorPeriods}
-                  placeholder="e.g. 52,156,260"
-                />
-                <FieldInput
-                  label="Min Turnover (₹)"
-                  value={minTurnover}
-                  onChange={setMinTurnover}
-                  type="number"
-                  last
-                />
+            <div style={styles.paramDivider} />
+
+            {/* Timeframe */}
+            <div style={styles.paramGroup}>
+              <span style={styles.paramLabel}>Timeframe</span>
+              <div style={styles.segInline}>
+                {['daily', 'weekly', 'monthly'].map(tf => (
+                  <SegBtn
+                    key={tf}
+                    label={tf.charAt(0).toUpperCase() + tf.slice(1)}
+                    value={tf}
+                    current={timeframe}
+                    disabled={!availableTimeframes.includes(tf)}
+                    onClick={v => {
+                      setTimeframe(v);
+                      if (DEFAULT_ANCHORS[v]) setAnchorPeriods(DEFAULT_ANCHORS[v]);
+                    }}
+                  />
+                ))}
               </div>
+            </div>
 
-              {/* Logic-specific params */}
-              {logic === 'breakout' && (
-                <div style={styles.section}>
-                  <div style={styles.sectionLabel}>
-                    <span>Breakout Params</span>
-                    <div style={styles.sectionLabelLine} />
-                  </div>
-                  <div style={styles.fieldRow}>
-                    <FieldInput label="Tol. Below AVWAP" value={toleranceBelowAvwap} onChange={setToleranceBelowAvwap} type="number" step="0.01" />
-                    <FieldInput label="Ceiling Above AVWAP" value={ceiling} onChange={setCeiling} type="number" step="0.01" />
-                  </div>
-                  <div style={{ ...styles.fieldRow, marginBottom: 0 }}>
-                    <FieldInput label="Sustain Periods" value={sustainPeriods} onChange={setSustainPeriods} type="number" last />
-                    <FieldInput label="Max Failed Attempts" value={maxFailedAttempts} onChange={setMaxFailedAttempts} type="number" last />
-                  </div>
-                </div>
-              )}
+            <div style={styles.paramDivider} />
 
-              {logic === 'pullback' && (
-                <div style={styles.section}>
-                  <div style={styles.sectionLabel}>
-                    <span>Pullback Params</span>
-                    <div style={styles.sectionLabelLine} />
-                  </div>
-                  <div style={styles.fieldRow}>
-                    <FieldInput label="Proximity Low (%)" value={proximityLowPct} onChange={setProximityLowPct} type="number" step="0.1" />
-                    <FieldInput label="Proximity High (%)" value={proximityHighPct} onChange={setProximityHighPct} type="number" step="0.1" />
-                  </div>
-                  <div style={{ ...styles.fieldRow, marginBottom: 0 }}>
-                    <FieldInput label="Max Brief Crosses" value={maxBriefCrosses} onChange={setMaxBriefCrosses} type="number" last />
-                    <FieldInput label="Min Periods Old" value={minPeriodsOld} onChange={setMinPeriodsOld} type="number" last />
-                  </div>
-                </div>
-              )}
+            {/* Anchor Periods */}
+            <ParamInput
+              label="Anchor Periods"
+              value={anchorPeriods}
+              onChange={setAnchorPeriods}
+              placeholder="e.g. 52,156,260"
+            />
 
-              {/* Run button */}
-              <div style={{ ...styles.sectionLast }}>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    ...styles.runButton,
-                    ...(loading ? styles.runButtonLoading : {}),
-                  }}
-                  onMouseEnter={e => {
-                    if (!loading) {
-                      (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 32px rgba(0, 255, 136, 0.4)`;
-                      (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!loading) {
-                      (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 20px ${C.greenGlow}`;
-                      (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-                    }
-                  }}
-                >
-                  {loading ? (
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                      <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: C.green, animation: 'blink 1s ease infinite' }} />
-                      Scanning...
-                    </span>
-                  ) : '▶  Run Scan'}
-                </button>
-              </div>
+            <div style={styles.paramDivider} />
+
+            {/* Min Turnover */}
+            <ParamInput
+              label="Min Turnover (₹)"
+              value={minTurnover}
+              onChange={setMinTurnover}
+              type="number"
+              narrow
+            />
+
+            {/* Run button — pushed to right edge */}
+            <div style={{ marginLeft: 'auto', paddingLeft: '20px' }}>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  ...styles.runButtonBar,
+                  ...(loading ? styles.runButtonBarLoading : {}),
+                }}
+                onMouseEnter={e => {
+                  if (!loading) {
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 28px rgba(0,255,136,0.40)`;
+                    (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!loading) {
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 18px ${C.greenGlow}`;
+                    (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+                  }
+                }}
+              >
+                {loading ? (
+                  <>
+                    <span style={{
+                      display: 'inline-block', width: '7px', height: '7px',
+                      borderRadius: '50%', backgroundColor: C.green,
+                      animation: 'blink 1s ease infinite',
+                    }} />
+                    Scanning…
+                  </>
+                ) : (
+                  <>▶ Run Scan</>
+                )}
+              </button>
             </div>
           </div>
-        </form>
 
-        {/* ── RIGHT: Results ─────────────────────────────────────────────── */}
-        <div style={styles.rightCol}>
+          {/* Row 2: logic-specific params */}
+          <div style={styles.paramsRow2}>
+            {logic === 'breakout' ? (
+              <>
+                <ParamInput label="Tol. Below AVWAP" value={toleranceBelowAvwap} onChange={setToleranceBelowAvwap} type="number" step="0.01" narrow />
+                <div style={styles.paramDivider} />
+                <ParamInput label="Ceiling Above AVWAP" value={ceiling} onChange={setCeiling} type="number" step="0.01" narrow />
+                <div style={styles.paramDivider} />
+                <ParamInput label="Sustain Periods" value={sustainPeriods} onChange={setSustainPeriods} type="number" narrow />
+                <div style={styles.paramDivider} />
+                <ParamInput label="Max Failed Attempts" value={maxFailedAttempts} onChange={setMaxFailedAttempts} type="number" narrow />
+              </>
+            ) : (
+              <>
+                <ParamInput label="Proximity Low (%)" value={proximityLowPct} onChange={setProximityLowPct} type="number" step="0.1" narrow />
+                <div style={styles.paramDivider} />
+                <ParamInput label="Proximity High (%)" value={proximityHighPct} onChange={setProximityHighPct} type="number" step="0.1" narrow />
+                <div style={styles.paramDivider} />
+                <ParamInput label="Max Brief Crosses" value={maxBriefCrosses} onChange={setMaxBriefCrosses} type="number" narrow />
+                <div style={styles.paramDivider} />
+                <ParamInput label="Min Periods Old" value={minPeriodsOld} onChange={setMinPeriodsOld} type="number" narrow />
+              </>
+            )}
+          </div>
+
+        </form>
+      </div>
+
+      {/* ── Results pane: scrolls independently ─────────────────────────────── */}
+      <main style={styles.resultsPane}>
+        <div style={styles.resultsPaneInner}>
 
           {/* Error */}
           {error && (
@@ -945,8 +934,9 @@ export default function Home() {
           {/* Results */}
           {results && !loading && (
             <div style={{ animation: 'fadeIn 0.4s ease' }}>
+
               {/* Stats row */}
-              <div style={{ ...styles.panel, marginBottom: '16px' }}>
+              <div style={{ ...styles.panel, marginBottom: '14px' }}>
                 <div style={styles.panelHeader}>
                   <div style={styles.panelHeaderDot} />
                   <span style={styles.panelTitle}>Scan Complete</span>
@@ -960,7 +950,7 @@ export default function Home() {
                     {market} · {logic.toUpperCase()} · {timeframe.toUpperCase()}
                   </span>
                 </div>
-                <div style={{ ...styles.statsRow, padding: '16px' }}>
+                <div style={{ ...styles.statsRow, padding: '14px' }}>
                   <div style={styles.statCard}>
                     <div style={styles.statLabel}>Total Matches</div>
                     <div style={styles.statValue}>{results.total}</div>
@@ -1041,23 +1031,24 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <div style={{ ...styles.panel }}>
+                <div style={styles.panel}>
                   <div style={styles.noResults}>No symbols matched the selected parameters.</div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Idle state */}
+          {/* Idle */}
           {!loading && !results && !error && (
             <div style={styles.idleCard}>
               <div style={styles.idleIcon}>◈</div>
               <div style={styles.idleTitle}>Ready to Scan</div>
               <div style={styles.idleSub}>
-                Configure parameters on the left and click Run Scan to begin scanning {market} for AVWAP {logic} setups.
+                Configure parameters above and click Run Scan to begin scanning {market} for AVWAP {logic} setups.
               </div>
             </div>
           )}
+
         </div>
       </main>
     </div>
