@@ -36,6 +36,13 @@ const C = {
   fontMono:     "'Space Mono', monospace",
 };
 
+// ─── Dynamic anchor defaults per timeframe ───────────────────────────────────
+const DEFAULT_ANCHORS: Record<string, string> = {
+  daily:   '180,365,550,730,900',
+  weekly:  '52,104,156,208,260',
+  monthly: '12,36,60,84,120',
+};
+
 const styles: Record<string, CSSProperties> = {
   // ── Layout ─────────────────────────────────────────────────────────────────
   page: {
@@ -586,7 +593,7 @@ export default function Home() {
   const [market, setMarket]                     = useState('NSE');
   const [logic, setLogic]                       = useState('breakout');
   const [timeframe, setTimeframe]               = useState('daily');
-  const [anchorPeriods, setAnchorPeriods]       = useState('52,156,260');
+  const [anchorPeriods, setAnchorPeriods]       = useState(DEFAULT_ANCHORS['daily']);
   const [toleranceBelowAvwap, setToleranceBelowAvwap] = useState('0.05');
   const [ceiling, setCeiling]                   = useState('0.10');
   const [sustainPeriods, setSustainPeriods]     = useState('3');
@@ -801,7 +808,10 @@ export default function Home() {
                         key={tf}
                         type="button"
                         disabled={disabled}
-                        onClick={() => setTimeframe(tf)}
+                        onClick={() => {
+                          setTimeframe(tf);
+                          if (DEFAULT_ANCHORS[tf]) setAnchorPeriods(DEFAULT_ANCHORS[tf]);
+                        }}
                         style={{
                           ...styles.segmentButton,
                           ...(tf === timeframe ? styles.segmentButtonActive : {}),
