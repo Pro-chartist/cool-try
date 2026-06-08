@@ -96,7 +96,7 @@ class PullbackScreener:
 
             closes = post_data['Close']
             # reindex a Series → returns a Series; .iloc[i] is a scalar float
-            avwap = post_avwap.reindex(Closes.index, method='ffill')
+            avwap = post_avwap.reindex(closes.index, method='ffill')
 
             # Check for consecutive closes below AVWAP
             streaks, cur = [], 0
