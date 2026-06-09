@@ -203,13 +203,9 @@ def main():
             print("  Sending to Telegram...")
 
             if args.logic == 'breakout':
-                message = build_breakout_telegram_message(
-                    results_df, anchor_periods, config
-                )
+                message = build_breakout_telegram_message(results_df, anchor_periods, config, args.market)
             else:
-                message = build_pullback_telegram_message(
-                    results_df, anchor_periods, config
-                )
+                message = build_pullback_telegram_message(results_df, anchor_periods, config, args.market)
 
             status = send_telegram_message(
                 message, args.telegram_token, args.telegram_chat_id
