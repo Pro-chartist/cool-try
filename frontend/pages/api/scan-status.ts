@@ -144,7 +144,7 @@ function getJobStartedAt(jobId: string): Date | undefined {
     return undefined;
   }
 
-  return new Date(timestamp - 60_000);
+  return new Date(timestamp);
 }
 
 function getStringQueryParam(value: string | string[] | undefined): string | undefined {
