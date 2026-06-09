@@ -717,14 +717,24 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2200);
   };
 
-  const downloadCsv = (downloadUrl?: string, filename?: string) => {
-    if (downloadUrl) {
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = filename || 'scan_results.csv';
-      a.click();
-    } else {
+const downloadCsv = async (downloadUrl?: string, filename?: string) => {
+    if (!downloadUrl) {
       alert('CSV not available yet. Check GitHub results folder.');
+      return;
+    }
+    try {
+      const res = await axios.get<string>(downloadUrl, { responseType: 'text' });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || 'scan_results.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Download failed. Try opening the CSV link directly.');
     }
   };
 
