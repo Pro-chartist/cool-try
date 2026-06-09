@@ -34,7 +34,7 @@ def send_telegram_message(message, bot_token, chat_id):
         return f"Error: {e}"
 
 
-def build_breakout_telegram_message(df_results, anchor_periods, config):
+def build_breakout_telegram_message(df_results, anchor_periods, config, market='NSE'):
     """
     Build Telegram message for breakout results.
     Groups by Pure/Retry, then by anchor period.
@@ -43,7 +43,7 @@ def build_breakout_telegram_message(df_results, anchor_periods, config):
 
     if df_results.empty:
         return (
-            f"📡 *NSE Breakout Scanner*\n"
+            f"📡 *{market} Breakout Scanner*\n"
             f"📅 {datetime.now().strftime('%d %b %Y')}\n\n"
             f"❌ No stocks matched the criteria today."
         )
@@ -59,7 +59,7 @@ def build_breakout_telegram_message(df_results, anchor_periods, config):
     sustain = config.get('sustain_periods', 0)
 
     lines = [
-        f"📡 *NSE Breakout Scanner*",
+        f"📡 *{market} Breakout Scanner*",
         f"📅 {today}  |  Timeframe: {timeframe}  |  Anchors: {anchors_str}",
         f"⏱ Sustain: {sustain}  |  Ceiling: {ceiling*100:.0f}%  |  Tolerance: {tolerance*100:.0f}%",
     ]
@@ -101,7 +101,7 @@ def build_breakout_telegram_message(df_results, anchor_periods, config):
     return "\n".join(lines)
 
 
-def build_pullback_telegram_message(df_results, anchor_periods, config):
+def build_pullback_telegram_message(df_results, anchor_periods, config, market='NSE'):
     """
     Build Telegram message for pullback results.
     Groups by anchor period.
@@ -119,7 +119,7 @@ def build_pullback_telegram_message(df_results, anchor_periods, config):
 
     if df_results.empty:
         return (
-            f"📡 *NSE Pullback Scanner*\n"
+            f"📡 *{market} Pullback Scanner*\n"
             f"📅 {datetime.now().strftime('%d %b %Y')}\n\n"
             f"❌ No stocks matched the criteria today."
         )
@@ -133,7 +133,7 @@ def build_pullback_telegram_message(df_results, anchor_periods, config):
     proximity = f"{prox_low}%-{prox_high}%"
 
     lines = [
-        f"📡 *NSE Pullback Scanner*",
+        f"📡 *{market} Pullback Scanner*",
         f"📅 {today}  |  Anchors: {anchors_str}",
         f"🎯 Proximity band: {proximity}  |  Total hits: {len(df_results)}",
         f"\n{SEP}",
