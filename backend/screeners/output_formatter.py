@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 
 
-def to_tv(symbol, market_suffix):
+def to_tv(symbol, market_suffix, market=''):
     """
     Convert symbol to TradingView format.
     E.g., SBIN + .NS → NSE:SBIN
@@ -15,10 +15,11 @@ def to_tv(symbol, market_suffix):
     suffix_map = {
         '.NS': 'NSE',
         '.BO': 'BSE',
-        '': 'NASDAQ',
-        '.N': 'NYSE',
     }
-    prefix = suffix_map.get(market_suffix, 'NSE')
+    if market_suffix == '':
+        prefix = 'NYSE' if market.upper() == 'NYSE' else 'NASDAQ'
+    else:
+        prefix = suffix_map.get(market_suffix, 'NSE')
     return f"{prefix}:{symbol}"
 
 
