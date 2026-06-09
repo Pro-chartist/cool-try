@@ -3,10 +3,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getGitHubAuthHeaders, getGitHubConfig, getGitHubErrorMessage } from '../../lib/github';
 
 type ScanResults = {
-  total: number;
-  pure: number;
-  retry: number;
-  symbols: string[];
+    total: number;
+    pure?: number;
+    retry?: number;
+    symbols: string[];
 };
 
 type ScanStatusResponse = {
@@ -99,11 +99,11 @@ function parseCsvResults(csvText: string): ScanResults {
   }
 
   return {
-    total: uniqueSymbols.length,
-    pure,
-    retry,
+    total: dataRows.length,
+    pure: failedAttemptsIndex !== -1 ? pure : undefined,
+    retry: failedAttemptsIndex !== -1 ? retry : undefined,
     symbols: uniqueSymbols,
-  };
+};
 }
 
 function parseDateFromFilename(name: string): Date {
