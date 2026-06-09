@@ -165,7 +165,7 @@ class PullbackScreener:
 
                         results.append({
                             'Symbol': symbol.replace(self.market_suffix, ''),
-                            'TV_Symbol': to_tv(symbol.replace(self.market_suffix, ''), self.market_suffix),
+                            'TV_Symbol': to_tv(symbol.replace(self.market_suffix, ''), self.market_suffix, self.market),
                             'Timeframe': self.timeframe.upper(),
                             'Anchor_Period': period_label,
                             'Current_Price': round(data['Close'].iloc[-1], 2),
