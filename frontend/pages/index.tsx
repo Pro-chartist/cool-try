@@ -585,6 +585,27 @@ function ParamInput({
   );
 }
 
+// ─── Persistence helpers ──────────────────────────────────────────────────────
+const STORAGE_KEY = 'argus_last_scan';
+
+function saveLastScan(scanResults, scanMarket, scanLogic, scanTimeframe) {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ results: scanResults, market: scanMarket, logic: scanLogic, timeframe: scanTimeframe })
+    );
+  } catch (_) {}
+}
+
+function loadLastScan() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Home() {
   // ── Form state (unchanged) ─────────────────────────────────────────────────
@@ -611,15 +632,16 @@ export default function Home() {
   const [elapsed, setElapsed]     = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+// Restore last scan results on page load
   useEffect(() => {
-    if (loading) {
-      setElapsed(0);
-      timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
+    const saved = loadLastScan();
+    if (saved) {
+      setResults(saved.results);
+      setMarket(saved.market);
+      setLogic(saved.logic);
+      setTimeframe(saved.timeframe);
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [loading]);
+  }, []);
 
   const formatElapsed = (s: number) => {
     const m = Math.floor(s / 60);
