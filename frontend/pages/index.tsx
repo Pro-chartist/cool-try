@@ -738,9 +738,7 @@ const downloadCsv = async (downloadUrl?: string, filename?: string) => {
     }
   };
 
-  const availableTimeframes = market === 'NASDAQ' || market === 'NYSE'
-    ? ['weekly']
-    : ['daily', 'weekly', 'monthly'];
+  const availableTimeframes = ['daily', 'weekly', 'monthly'];
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
