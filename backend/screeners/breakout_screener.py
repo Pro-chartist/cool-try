@@ -213,7 +213,7 @@ class BreakoutScreener:
 
                 results.append({
                     'Stock': symbol.replace(self.market_suffix, ''),
-                    'TV Symbol': to_tv(symbol.replace(self.market_suffix, ''), self.market_suffix),
+                    'TV Symbol': to_tv(symbol.replace(self.market_suffix, ''), self.market_suffix, self.market),
                     'Anchor Period': period,
                     'Break Type': break_type,
                     'Failed Attempts': failed_count,
