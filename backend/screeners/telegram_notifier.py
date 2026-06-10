@@ -10,25 +10,37 @@ from datetime import datetime
 def send_telegram_message(message, bot_token, chat_id):
     try:
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        
+        # Split into ≤4096-char chunks, breaking at newlines
+        MAX_LEN = 4000  # safe margin below 4096
+        chunks = []
+        current = ""
+        for line in message.split("\n"):
+            addition = (line + "\n")
+            if len(current) + len(addition) > MAX_LEN:
+                chunks.append(current.rstrip())
+                current = addition
+            else:
+                current += addition
+        if current.strip():
+            chunks.append(current.rstrip())
 
-        resp = requests.post(
-            url,
-            json={
-                "chat_id": chat_id,
-                "text": message,
-                "parse_mode": "Markdown",
-                "disable_web_page_preview": True,
-            },
-            timeout=10,
-        )
+        for i, chunk in enumerate(chunks):
+            resp = requests.post(
+                url,
+                json={
+                    "chat_id": chat_id,
+                    "text": chunk,
+                    "parse_mode": "Markdown",
+                    "disable_web_page_preview": True,
+                },
+                timeout=10,
+            )
+            print(f"Telegram chunk {i+1}/{len(chunks)} status: {resp.status_code}")
+            if resp.status_code != 200:
+                return f"Failed on chunk {i+1}: {resp.text}"
 
-        print(f"Telegram Status: {resp.status_code}")
-        print(f"Telegram Response: {resp.text}")
-
-        if resp.status_code == 200:
-            return "OK"
-
-        return f"Failed: {resp.text}"
+        return "OK"
 
     except Exception as e:
         return f"Error: {e}"
