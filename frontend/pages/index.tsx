@@ -723,7 +723,6 @@ useEffect(() => {
             saveLastScan(finalResults, market, logic, timeframe);
           }
           setLoading(false);
-        }
         } else if (res.data.status === 'failed') {
           clearInterval(interval);
           setError(res.data.error || 'Scan failed');
