@@ -813,11 +813,6 @@ const downloadCsv = async (downloadUrl?: string, filename?: string) => {
                 {['NSE', 'BSE', 'NASDAQ', 'NYSE'].map(m => (
                   <SegBtn key={m} label={m} value={m} current={market} onClick={v => {
                     setMarket(v);
-                    // reset timeframe if switching to US markets
-                    if ((v === 'NASDAQ' || v === 'NYSE') && timeframe !== 'weekly') {
-                      setTimeframe('weekly');
-                      setAnchorPeriods(DEFAULT_ANCHORS['weekly']);
-                    }
                   }} />
                 ))}
               </div>
