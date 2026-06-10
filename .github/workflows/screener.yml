@@ -4,8 +4,10 @@ on:
   repository_dispatch:
     types: [run-screener]
   schedule:
-    - cron: '0 2 * * 1-5'   # NSE Daily Breakout  — 07:30 IST Mon–Fri
-    - cron: '15 2 * * 1-5'  # NSE Weekly Breakout — 07:45 IST Mon–Fri
+    - cron: '30 23 * * 0-4'   # NSE Daily Breakout    — 5:00 AM IST Mon–Fri
+    - cron: '45 23 * * 0-4'   # NSE Weekly Breakout   — 5:15 AM IST Mon–Fri
+    - cron: '0 0 * * 1-5'     # NYSE Weekly Breakout  — 5:30 AM IST Mon–Fri
+    - cron: '15 0 * * 1-5'    # NASDAQ Weekly Breakout— 5:45 AM IST Mon–Fri
 
 permissions:
   contents: write
@@ -16,14 +18,11 @@ jobs:
     if: github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install backend dependencies
-        run: python -m pip install -r backend/requirements.txt
+      - run: python -m pip install -r backend/requirements.txt
       - name: Run screener
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -52,7 +51,7 @@ jobs:
           git push
 
   scheduled-nse-daily-breakout:
-    if: github.event_name == 'schedule' && github.event.schedule == '0 2 * * 1-5'
+    if: github.event_name == 'schedule' && github.event.schedule == '30 23 * * 0-4'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,25 +59,26 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install -r backend/requirements.txt
-      - name: Run NSE Daily Breakout
+      - name: Run NSE Daily Breakout (Pure Only)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python backend/screener_dispatcher.py \
-            --market "NSE" --logic "breakout" --timeframe "daily" --params '{}'
+            --market "NSE" --logic "breakout" --timeframe "daily" \
+            --params '{"max_failed_attempts": 0}'
       - name: Commit results
         run: |
           if [ -z "$(git status --short backend/results)" ]; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f backend/results
-          git commit -m "Scheduled: NSE daily breakout"
+          git commit -m "Scheduled: NSE daily breakout (pure)"
           git pull --rebase origin main
           git push
 
   scheduled-nse-weekly-breakout:
-    if: github.event_name == 'schedule' && github.event.schedule == '15 2 * * 1-5'
+    if: github.event_name == 'schedule' && github.event.schedule == '45 23 * * 0-4'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -86,19 +86,74 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install -r backend/requirements.txt
-      - name: Run NSE Weekly Breakout
+      - name: Run NSE Weekly Breakout (Pure Only)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python backend/screener_dispatcher.py \
-            --market "NSE" --logic "breakout" --timeframe "weekly" --params '{}'
+            --market "NSE" --logic "breakout" --timeframe "weekly" \
+            --params '{"max_failed_attempts": 0}'
       - name: Commit results
         run: |
           if [ -z "$(git status --short backend/results)" ]; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f backend/results
-          git commit -m "Scheduled: NSE weekly breakout"
+          git commit -m "Scheduled: NSE weekly breakout (pure)"
+          git pull --rebase origin main
+          git push
+
+  scheduled-nyse-weekly-breakout:
+    if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * 1-5'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r backend/requirements.txt
+      - name: Run NYSE Weekly Breakout (Pure Only)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python backend/screener_dispatcher.py \
+            --market "NYSE" --logic "breakout" --timeframe "weekly" \
+            --params '{"max_failed_attempts": 0}'
+      - name: Commit results
+        run: |
+          if [ -z "$(git status --short backend/results)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f backend/results
+          git commit -m "Scheduled: NYSE weekly breakout (pure)"
+          git pull --rebase origin main
+          git push
+
+  scheduled-nasdaq-weekly-breakout:
+    if: github.event_name == 'schedule' && github.event.schedule == '15 0 * * 1-5'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r backend/requirements.txt
+      - name: Run NASDAQ Weekly Breakout (Pure Only)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python backend/screener_dispatcher.py \
+            --market "NASDAQ" --logic "breakout" --timeframe "weekly" \
+            --params '{"max_failed_attempts": 0}'
+      - name: Commit results
+        run: |
+          if [ -z "$(git status --short backend/results)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f backend/results
+          git commit -m "Scheduled: NASDAQ weekly breakout (pure)"
           git pull --rebase origin main
           git push
