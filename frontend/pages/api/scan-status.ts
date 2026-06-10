@@ -84,25 +84,50 @@ function parseCsvResults(csvText: string): ScanResults {
     .filter((symbol): symbol is string => Boolean(symbol));
   const uniqueSymbols = Array.from(new Set(symbols));
 
-  let pure = 0;
-  let retry = 0;
 
-  if (failedAttemptsIndex !== -1) {
-    dataRows.forEach((row) => {
-      const attempts = Number.parseInt(row[failedAttemptsIndex] ?? '0', 10);
-      if (Number.isNaN(attempts) || attempts === 0) {
-        pure += 1;
-      } else {
-        retry += 1;
-      }
-    });
+    const symbolRowMap = new Map<string, string[]>();
+dataRows.forEach((row) => {
+  const sym = row[symbolColIndex];
+  if (!sym) return;
+  const existing = symbolRowMap.get(sym);
+  if (!existing) {
+    symbolRowMap.set(sym, row);
+  } else if (failedAttemptsIndex !== -1) {
+    const newAttempts = Number.parseInt(row[failedAttemptsIndex] ?? '99', 10);
+    const oldAttempts = Number.parseInt(existing[failedAttemptsIndex] ?? '99', 10);
+    if (newAttempts < oldAttempts) symbolRowMap.set(sym, row);
   }
+});
 
-  return {
-    total: dataRows.length,
-    pure: failedAttemptsIndex !== -1 ? pure : undefined,
-    retry: failedAttemptsIndex !== -1 ? retry : undefined,
-    symbols: uniqueSymbols,
+const dedupedRows = Array.from(symbolRowMap.values());
+    
+    let pure = 0;
+    let retry = 0;
+    
+    if (failedAttemptsIndex !== -1) {
+      dedupedRows.forEach((row) => {
+        const attempts = Number.parseInt(row[failedAttemptsIndex] ?? '0', 10);
+        if (Number.isNaN(attempts) || attempts === 0) {
+          pure += 1;
+        } else {
+          retry += 1;
+        }
+      });
+    }
+    
+    return {
+      total: dedupedRows.length,
+      pure: failedAttemptsIndex !== -1 ? pure : undefined,
+      retry: failedAttemptsIndex !== -1 ? retry : undefined,
+      symbols: uniqueSymbols,
+    };
+}
+
+return {
+  total: dedupedRows.length,
+  pure: failedAttemptsIndex !== -1 ? pure : undefined,
+  retry: failedAttemptsIndex !== -1 ? retry : undefined,
+  symbols: uniqueSymbols,
 };
 }
 
