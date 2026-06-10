@@ -714,11 +714,16 @@ useEffect(() => {
         });
         if (res.data.status === 'completed') {
           clearInterval(interval);
-          setResults(res.data.results
+          const finalResults = res.data.results
             ? { ...res.data.results, csvFile: res.data.csvFile, downloadUrl: res.data.downloadUrl }
-            : null
-          );
+            : null;
+          setResults(finalResults);
+          // Persist results so they survive page refresh
+          if (finalResults) {
+            saveLastScan(finalResults, market, logic, timeframe);
+          }
           setLoading(false);
+        }
         } else if (res.data.status === 'failed') {
           clearInterval(interval);
           setError(res.data.error || 'Scan failed');
