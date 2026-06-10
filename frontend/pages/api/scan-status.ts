@@ -123,14 +123,6 @@ const dedupedRows = Array.from(symbolRowMap.values());
     };
 }
 
-return {
-  total: dedupedRows.length,
-  pure: failedAttemptsIndex !== -1 ? pure : undefined,
-  retry: failedAttemptsIndex !== -1 ? retry : undefined,
-  symbols: uniqueSymbols,
-};
-}
-
 function parseDateFromFilename(name: string): Date {
   const match = name.match(
     /(\d{2})(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{4})/i
