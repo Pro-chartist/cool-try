@@ -144,7 +144,7 @@ def build_pullback_telegram_message(df_results, anchor_periods, config, market='
     # Preserve the order by using anchor_periods as a reference.
     seen_labels = set()
     for period_int in anchor_periods:
-        for suffix in ('d', 'w'):
+        for suffix in ('d', 'w', 'mo'):
             label = f"{period_int}{suffix}"
             if label in seen_labels:
                 continue
