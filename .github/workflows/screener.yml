@@ -149,7 +149,7 @@ jobs:
         run: |
           python backend/screener_dispatcher.py \
             --market "NYSE" --logic "pullback" --timeframe "daily" \
-            --params '{"max_failed_attempts": 0}'
+            --params '{"max_brief_crosses": 3}'
       - name: Commit results
         run: |
           if [ -z "$(git status --short backend/results)" ]; then exit 0; fi
@@ -176,7 +176,7 @@ jobs:
         run: |
           python backend/screener_dispatcher.py \
             --market "NSE" --logic "pullback" --timeframe "daily" \
-            --params '{"max_failed_attempts": 0}'
+            --params '{"max_brief_crosses": 3}'
       - name: Commit results
         run: |
           if [ -z "$(git status --short backend/results)" ]; then exit 0; fi
