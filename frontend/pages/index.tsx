@@ -620,7 +620,7 @@ export default function Home() {
   const [minTurnover, setMinTurnover]                 = useState('5000000');
   const [proximityLowPct, setProximityLowPct]         = useState('0.0');
   const [proximityHighPct, setProximityHighPct]       = useState('2.0');
-  const [maxBriefCrosses, setMaxBriefCrosses]         = useState('5');
+  const [maxBriefCrosses, setMaxBriefCrosses]         = useState('3');
   const [minPeriodsOld, setMinPeriodsOld]             = useState('20');
 
   // ── UI state (unchanged) ───────────────────────────────────────────────────
