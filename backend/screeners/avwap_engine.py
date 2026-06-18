@@ -107,14 +107,6 @@ def find_anchor_points(data, lookback_periods, min_periods_old):
                     'days_old': days_old,
                 }
 
-        # Deduplicate: if multiple periods resolve to same anchor date, keep the one with the lowest low
-        seen_dates = {}
-        for key, info in anchors.items():
-            date = info['date']
-            if date not in seen_dates or info['low'] < seen_dates[date]['low']:
-                seen_dates[date] = {**info, 'key': key}
-        anchors = {v['key']: {k: val for k, val in v.items() if k != 'key'} for v in seen_dates.values()}
-
         return anchors if anchors else None
     except Exception:
         return None
