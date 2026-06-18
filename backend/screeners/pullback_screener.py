@@ -164,6 +164,7 @@ class PullbackScreener:
                             period_label = f"{period}mo"
 
                         results.append({
+                            '_period_num': period,
                             'Symbol': symbol.replace(self.market_suffix, ''),
                             'TV_Symbol': to_tv(symbol.replace(self.market_suffix, ''), self.market_suffix, self.market),
                             'Timeframe': self.timeframe.upper(),
@@ -180,10 +181,29 @@ class PullbackScreener:
                             'Max_Bars_Below': max_below,
                         })
 
-                        hits.append(f"{period_label}:✅({result:.1f}%)")
-
             except Exception:
                 continue
+
+        # FIX 3: find_anchor_points() only dedupes across periods passed to it
+        # in a single call. Here it's called once per period (a 1-item list
+        # each time), so its internal "same anchor date -> keep one" logic
+        # never has more than one candidate to compare and is effectively a
+        # no-op. As a result, a stock whose 52w/104w/156w low all happen to
+        # be the same historical bar produced one near-identical result row
+        # per period -- surfacing as duplicate entries in the Telegram message.
+        # Dedupe here across all periods for this symbol: when multiple
+        # periods resolve to the same Anchor_Date, keep only the shortest
+        # (smallest) period.
+        best_by_date = {}
+        for r in results:
+            d = r['Anchor_Date']
+            if d not in best_by_date or r['_period_num'] < best_by_date[d]['_period_num']:
+                best_by_date[d] = r
+        results = list(best_by_date.values())
+
+        for r in results:
+            del r['_period_num']
+            hits.append(f"{r['Anchor_Period']}:✅({r['Distance_%']:.1f}%)")
 
         return results, hits
 
