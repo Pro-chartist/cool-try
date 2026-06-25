@@ -6,9 +6,9 @@ on:
   schedule:
     - cron: '30 23 * * 0-4'   # NSE Daily Breakout    — 5:00 AM IST Mon–Fri
     - cron: '45 23 * * 0-4'   # NSE Weekly Breakout   — 5:15 AM IST Mon–Fri
-    - cron: '15 0 * * 1-5'    # NYSE Daily Breakout   — 5:45 AM IST Mon–Fri
+    - cron: '15 0 * * 1-5'    # NSE Daily Breakout   — 5:45 AM IST Mon–Fri
     - cron: '30 0 * * 1-5'    # NYSE Daily Pullback   — 6:00 AM IST Mon–Fri
-    - cron: '45 0 * * 1-5'    # NSE Daily Pullback    — 6:15 AM IST Mon–Fri
+    - cron: '45 0 * * 1-5'    # NYSE Daily Pullback    — 6:15 AM IST Mon–Fri
 
 permissions:
   contents: write
@@ -106,7 +106,7 @@ jobs:
           git push
 
   scheduled-nyse-daily-breakout:
-    if: github.event_name == 'schedule' && github.event.schedule == '15 0 * * 1-5'
+    if: github.event_name == 'schedule' && github.event.schedule == '45 0 * * 1-5'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -160,7 +160,7 @@ jobs:
           git push
 
   scheduled-nse-daily-pullback:
-    if: github.event_name == 'schedule' && github.event.schedule == '45 0 * * 1-5'
+    if: github.event_name == 'schedule' && github.event.schedule == '15 0 * * 1-5'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
