@@ -4,10 +4,10 @@ on:
   repository_dispatch:
     types: [run-screener]
   schedule:
-    - cron: '30 23 * * 0-4'   # NSE Daily Breakout    — 5:00 AM IST Mon–Fri
-    - cron: '45 23 * * 0-4'   # NSE Weekly Breakout   — 5:15 AM IST Mon–Fri
-    - cron: '15 0 * * 1-5'    # NSE Daily Pullback   — 5:45 AM IST Mon–Fri
-    - cron: '30 0 * * 1-5'    # NSE Weekly Pullback   — 6:00 AM IST Mon–Fri
+    - cron: '30 20 * * 0-4'   # NSE Daily Breakout    — 2:00 AM IST Mon–Fri
+    - cron: '45 20 * * 0-4'   # NSE Weekly Breakout   — 2:15 AM IST Mon–Fri
+    - cron: '15 21 * * 0-4'   # NSE Daily Pullback    — 2:45 AM IST Mon–Fri
+    - cron: '30 21 * * 0-4'   # NSE Weekly Pullback   — 3:00 AM IST Mon–Fri
 
 permissions:
   contents: write
