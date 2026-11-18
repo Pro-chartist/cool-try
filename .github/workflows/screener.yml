@@ -3,11 +3,6 @@ name: Screener
 on:
   repository_dispatch:
     types: [run-screener]
-  schedule:
-    - cron: '30 20 * * 0-4'   # NSE Daily Breakout    — 2:00 AM IST Mon–Fri
-    - cron: '45 20 * * 0-4'   # NSE Weekly Breakout   — 2:15 AM IST Mon–Fri
-    - cron: '15 21 * * 0-4'   # NSE Daily Pullback    — 2:45 AM IST Mon–Fri
-    - cron: '30 21 * * 0-4'   # NSE Weekly Pullback   — 3:00 AM IST Mon–Fri
 
 permissions:
   contents: write
